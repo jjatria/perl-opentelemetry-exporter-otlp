@@ -63,8 +63,6 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     }
 
     my sub as_otlp_span ( $span ) {
-        $logger->tracef('Exporting span with status %s', $span->status->code);
-
         {
             trace_id                 => $span->trace_id,
             span_id                  => $span->span_id,
