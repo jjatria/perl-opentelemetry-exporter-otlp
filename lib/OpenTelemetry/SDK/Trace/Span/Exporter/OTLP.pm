@@ -6,25 +6,83 @@ package OpenTelemetry::SDK::Trace::Span::Exporter::OTLP;
 our $VERSION = '0.001';
 
 class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::Trace::Span::Exporter) {
+    use Compress::Zlib;
     use Future::AsyncAwait;
-
-    use Scalar::Util 'refaddr';
-    use OpenTelemetry;
-    use OpenTelemetry::Proto;
+    use HTTP::Tiny;
+    use OpenTelemetry::Common 'config';
     use OpenTelemetry::Constants -trace_export;
+    use OpenTelemetry::Proto;
+    use OpenTelemetry::X;
+    use OpenTelemetry;
+    use Ref::Util 'is_arrayref';
+    use Scalar::Util 'refaddr';
+    use URL::Encode 'url_decode';
+    use OpenTelemetry::SDK::Trace::MetricsReporter;
 
     my $logger = OpenTelemetry->logger;
 
     field $stopped;
+    field $ua;
+    field $endpoint;
+    field $compression :param = undef;
+    field $metrics     :param = OpenTelemetry::SDK::Trace::MetricsReporter->new;
+
+    ADJUSTPARAMS ($params) {
+        $endpoint = delete $params->{endpoint} // config('EXPORTER_OTLP_TRACES_ENDPOINT');
+        $endpoint //= do {
+            my $base = config('EXPORTER_OTLP_ENDPOINT');
+            $base
+                ? ( ( $base =~ s|/+$||r ) . '/v1/traces' )
+                : 'http://localhost:4318/v1/traces';
+        };
+
+        $compression
+            //= config(qw( EXPORTER_OTLP_TRACES_COMPRESSION EXPORTER_OTLP_COMPRESSION ))
+            // 'gzip';
+
+        my $timeout = delete $params->{timeout}
+            // config(qw( EXPORTER_OTLP_TRACES_TIMEOUT EXPORTER_OTLP_TIMEOUT ))
+            // 10;
+
+        my $headers = delete $params->{headers}
+            // config(qw( EXPORTER_OTLP_TRACES_HEADERS EXPORTER_OTLP_HEADERS ))
+            // {};
+
+        $headers = {
+            map {
+                my ( $k, $v ) = map url_decode($_), split '=', $_, 2;
+                $k =~ s/^\s+|\s+$//g;
+                $v =~ s/^\s+|\s+$//g;
+                $k => $v;
+            } split ',', $headers
+        } unless ref $headers;
+
+        die OpenTelemetry::X->create(
+            Invalid => "invalid url for OTLP exporter $endpoint"
+        ) unless "$endpoint" =~ m|^https?://|;
+
+        die OpenTelemetry::X->create(
+            Invalid => "unsupported compression key $compression"
+        ) unless $compression =~ /^(?:gzip|none)$/;
+
+        $ua = HTTP::Tiny->new(
+            timeout => $timeout,
+            default_headers => { %$headers, 'Content-Type' => 'application/x-protobuf' },
+        );
+    }
+
+    my sub as_otlp_value ( $v ) {
+        is_arrayref $v
+            ? { array_value => [ map as_otlp_value($_), @$v ] }
+            : { string_value => $v }
+    }
 
     my sub as_otlp_attributes ( $hash ) {
         [
             map {
                 {
                     key   => $_,
-                    value => {
-                        string_value => $hash->{$_},
-                    },
+                    value => as_otlp_value($hash->{$_}),
                 };
             } keys %$hash,
         ];
@@ -91,13 +149,7 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
         };
     }
 
-    method $send_bytes ( $data, $timeout ) {
-        $logger->trace('Boop beep boop, sending bytes');
-        $logger->trace($data->encode_json);
-        return TRACE_EXPORT_SUCCESS;
-    }
-
-    method $encode ( $spans ) {
+    my sub make_request ( $spans ) {
         my ( %request, %resources );
 
         for (@$spans) {
@@ -137,9 +189,34 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
             ->new_and_check(\%request);
     }
 
+    method $send_request ( $data, $timeout ) {
+        my %request = ( content => $data->encode );
+
+        $logger->trace('Boop beep boop, sending bytes');
+
+        $metrics->record_value(
+            'otel.otlp_exporter.message.uncompressed_size' => length $request{content}
+        );
+
+        if ( $compression eq 'gzip' ) {
+            $request{headers}{'Content-Encoding'} = 'gzip';
+            $request{content} = Compress::Zlib::compress($request{content})
+                or die 'WHHHAAAAA';
+            $metrics->record_value( 'otel.otlp_exporter.message.compressed_size', length $request{content} );
+        }
+
+        use Data::Dumper;
+        my $res = $ua->post( $endpoint, \%request );
+        warn Dumper $res;
+
+        return TRACE_EXPORT_SUCCESS;
+    }
+
     async method export ( $spans, $timeout = undef ) {
         return TRACE_EXPORT_FAILURE if $stopped;
-        $self->$send_bytes( $self->$encode($spans), $timeout );
+
+        my $request = make_request($spans);
+        $self->$send_request( $request, $timeout );
     }
 
     async method shutdown ( $timeout = undef ) {

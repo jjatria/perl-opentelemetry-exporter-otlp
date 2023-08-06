@@ -42,6 +42,7 @@
       },
       "runtime" : {
          "requires" : {
+            "Compress::Zlib" : "0",
             "File::Share" : "0",
             "Google::ProtocolBuffers::Dynamic" : "0",
             "Object::Pad" : "0",
