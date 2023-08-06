@@ -39,7 +39,7 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
     my sub as_otlp_event ( $event ) {
         {
-            time_unix_nano           => $event->timestamp,
+            time_unix_nano           => $event->timestamp * 1_000_000_000,
             name                     => $event->name,
             attributes               => as_otlp_attributes($event->attributes),
             dropped_attributes_count => 0,
@@ -72,8 +72,8 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
             parent_span_id           => $span->parent_span_id,
             name                     => $span->name,
             kind                     => $span->kind,
-            start_time_unix_nano     => $span->start_timestamp,
-            end_time_unix_nano       => $span->end_timestamp,
+            start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
+            end_time_unix_nano       => $span->end_timestamp   * 1_000_000_000,
             attributes               => as_otlp_attributes($span->attributes),
             events                   => [ map as_otlp_event($_), $span->events ],
             links                    => [ map as_otlp_link($_),  $span->links  ],
