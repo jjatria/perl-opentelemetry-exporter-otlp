@@ -17,15 +17,14 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     use Ref::Util 'is_arrayref';
     use Scalar::Util 'refaddr';
     use URL::Encode 'url_decode';
-    use OpenTelemetry::SDK::Trace::MetricsReporter;
 
+    use Metrics::Any '$metrics', strict => 0;
     my $logger = OpenTelemetry->logger;
 
     field $stopped;
     field $ua;
     field $endpoint;
     field $compression :param = undef;
-    field $metrics     :param = OpenTelemetry::SDK::Trace::MetricsReporter->new;
 
     ADJUSTPARAMS ($params) {
         $endpoint = delete $params->{endpoint} // config('EXPORTER_OTLP_TRACES_ENDPOINT');
@@ -194,15 +193,19 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
         $logger->trace('Boop beep boop, sending bytes');
 
-        $metrics->record_value(
-            'otel.otlp_exporter.message.uncompressed_size' => length $request{content}
+        $metrics->report_distribution(
+            'otel.otlp_exporter.message.uncompressed_size',
+            length $request{content},
         );
 
         if ( $compression eq 'gzip' ) {
             $request{headers}{'Content-Encoding'} = 'gzip';
             $request{content} = Compress::Zlib::compress($request{content})
                 or die 'WHHHAAAAA';
-            $metrics->record_value( 'otel.otlp_exporter.message.compressed_size', length $request{content} );
+            $metrics->report_distribution(
+                'otel.otlp_exporter.message.compressed_size',
+                length $request{content},
+            );
         }
 
         use Data::Dumper;

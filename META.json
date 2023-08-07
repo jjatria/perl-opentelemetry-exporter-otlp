@@ -45,6 +45,7 @@
             "Compress::Zlib" : "0",
             "File::Share" : "0",
             "Google::ProtocolBuffers::Dynamic" : "0",
+            "Metrics::Any" : "0",
             "Object::Pad" : "0",
             "OpenTelemetry::SDK" : "0",
             "Path::Tiny" : "0",
