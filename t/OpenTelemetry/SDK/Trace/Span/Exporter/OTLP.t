@@ -3,12 +3,17 @@
 use Log::Any::Adapter 'Stderr';
 use Test2::V0 -target => 'OpenTelemetry::SDK::Trace::Span::Exporter::OTLP';
 
+use HTTP::Tiny;
 use OpenTelemetry::Constants -trace_export, -span_kind, -span_status;
 use OpenTelemetry::Trace::SpanContext;
 use OpenTelemetry::SDK::Trace::Span::Readable;
 use OpenTelemetry::SDK::Resource;
 use OpenTelemetry::SDK::InstrumentationScope;
 use OpenTelemetry::Trace::Span::Status;
+
+my $guard = mock 'HTTP::Tiny' => override => [
+    request => sub { +{ success => 1 } },
+];
 
 my $a_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'A' );
 my $b_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'B' );
