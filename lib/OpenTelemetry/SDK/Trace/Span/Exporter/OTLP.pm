@@ -209,8 +209,17 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
         if ( $compression eq 'gzip' ) {
             $request{headers}{'Content-Encoding'} = 'gzip';
-            $request{content} = Compress::Zlib::memGzip($request{content})
-                or die "Error comnpressing data: $gzerrno";
+            $request{content} = Compress::Zlib::memGzip($request{content});
+
+            unless ($request{content}) {
+                OpenTelemetry->handle_error( message => "Error compressing data: $gzerrno" );
+                $metrics->inc_counter(
+                    'otel.otlp_exporter.failure',
+                    { reason => 'zlib_error' },
+                );
+
+                return TRACE_EXPORT_FAILURE;
+            }
 
             $metrics->report_distribution(
                 'otel.otlp_exporter.message.compressed_size',
@@ -218,11 +227,22 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
             );
         }
 
-        use Data::Dumper;
         my $res = $ua->post( $endpoint, \%request );
-        warn Dumper $res;
 
-        return TRACE_EXPORT_SUCCESS;
+        return TRACE_EXPORT_SUCCESS if $res->{success};
+
+        if ( $res->{status} == 404 ) {
+            OpenTelemetry->handle_error(
+                message => "OTLP exporter received HTTP code 404 Not Found for URI: '$endpoint'",
+            );
+        }
+
+        $metrics->inc_counter(
+            'otel.otlp_exporter.failure',
+            { reason => $res->{status} },
+        );
+
+        return TRACE_EXPORT_FAILURE;
     }
 
     async method export ( $spans, $timeout = undef ) {
