@@ -27,7 +27,9 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     field $compression :param = undef;
 
     ADJUSTPARAMS ($params) {
-        $endpoint = delete $params->{endpoint} // config('EXPORTER_OTLP_TRACES_ENDPOINT');
+        $endpoint = delete $params->{endpoint}
+            // config('EXPORTER_OTLP_TRACES_ENDPOINT');
+
         $endpoint //= do {
             my $base = config('EXPORTER_OTLP_ENDPOINT');
             $base
@@ -65,8 +67,11 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
         ) unless $compression =~ /^(?:gzip|none)$/;
 
         $ua = HTTP::Tiny->new(
-            timeout => $timeout,
-            default_headers => { %$headers, 'Content-Type' => 'application/x-protobuf' },
+            timeout         => $timeout,
+            default_headers => {
+                %$headers,
+                'Content-Type' => 'application/x-protobuf',
+            },
         );
     }
 
@@ -189,9 +194,9 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     }
 
     method $send_request ( $data, $timeout ) {
-        my %request = ( content => $data->encode );
+        # TODO: timeouts, redirection, more error handling, and retries
 
-        $logger->trace('Boop beep boop, sending bytes');
+        my %request = ( content => $data->encode );
 
         $metrics->report_distribution(
             'otel.otlp_exporter.message.uncompressed_size',
