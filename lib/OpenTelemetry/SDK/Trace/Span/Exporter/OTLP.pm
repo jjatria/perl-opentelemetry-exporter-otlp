@@ -75,10 +75,14 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
         );
     }
 
+    my sub as_otlp_single_value ( $v ) {
+        { string_value => $v }
+    }
+
     my sub as_otlp_value ( $v ) {
         is_arrayref $v
-            ? { array_value => [ map as_otlp_value($_), @$v ] }
-            : { string_value => $v }
+            ? { array_value => { values => [ map as_otlp_single_value($_), @$v ] } }
+            : as_otlp_single_value($v)
     }
 
     my sub as_otlp_attributes ( $hash ) {
