@@ -209,8 +209,9 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
         if ( $compression eq 'gzip' ) {
             $request{headers}{'Content-Encoding'} = 'gzip';
-            $request{content} = Compress::Zlib::compress($request{content})
-                or die 'WHHHAAAAA';
+            $request{content} = Compress::Zlib::memGzip($request{content})
+                or die "Error comnpressing data: $gzerrno";
+
             $metrics->report_distribution(
                 'otel.otlp_exporter.message.compressed_size',
                 length $request{content},
