@@ -99,25 +99,25 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     my sub as_otlp_resource ( $resource ) {
         {
             attributes               => as_otlp_attributes( $resource->attributes ),
-            dropped_attributes_count => 0,
+            dropped_attributes_count => $resource->dropped_attributes,
         };
     }
 
     my sub as_otlp_event ( $event ) {
         {
-            time_unix_nano           => $event->timestamp * 1_000_000_000,
-            name                     => $event->name,
             attributes               => as_otlp_attributes($event->attributes),
-            dropped_attributes_count => 0,
+            dropped_attributes_count => $event->dropped_attributes,
+            name                     => $event->name,
+            time_unix_nano           => $event->timestamp * 1_000_000_000,
         };
     }
 
     my sub as_otlp_link ( $link ) {
         {
-            trace_id                 => $link->context->trace_id,
-            span_id                  => $link->context->span_id,
             attributes               => as_otlp_attributes($link->attributes),
-            dropped_attributes_count => 0,
+            dropped_attributes_count => $link->dropped_attributes,
+            span_id                  => $link->context->span_id,
+            trace_id                 => $link->context->trace_id,
         };
     }
 
@@ -130,30 +130,30 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
     my sub as_otlp_span ( $span ) {
         {
-            trace_id                 => $span->trace_id,
-            span_id                  => $span->span_id,
-            trace_state              => $span->trace_state->to_string,
-            parent_span_id           => $span->parent_span_id,
-            name                     => $span->name,
-            kind                     => $span->kind,
-            start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
-            end_time_unix_nano       => $span->end_timestamp   * 1_000_000_000,
             attributes               => as_otlp_attributes($span->attributes),
+            dropped_attributes_count => $span->dropped_attributes,
+            dropped_events_count     => $span->dropped_events,
+            dropped_links_count      => $span->dropped_links,
+            end_time_unix_nano       => $span->end_timestamp   * 1_000_000_000,
             events                   => [ map as_otlp_event($_), $span->events ],
+            kind                     => $span->kind,
             links                    => [ map as_otlp_link($_),  $span->links  ],
+            name                     => $span->name,
+            parent_span_id           => $span->parent_span_id,
+            span_id                  => $span->span_id,
+            start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
             status                   => as_otlp_status($span->status),
-            dropped_attributes_count => 0,
-            dropped_events_count     => 0,
-            dropped_links_count      => 0,
+            trace_id                 => $span->trace_id,
+            trace_state              => $span->trace_state->to_string,
         };
     }
 
     my sub as_otlp_scope ( $scope ) {
         {
+            attributes               => as_otlp_attributes( $scope->attributes ),
+            dropped_attributes_count => $scope->dropped_attributes,
             name                     => $scope->name,
             version                  => $scope->version,
-            attributes               => as_otlp_attributes( $scope->attributes ),
-            dropped_attributes_count => 0,
         };
     }
 
