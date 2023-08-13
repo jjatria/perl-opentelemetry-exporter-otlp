@@ -10,7 +10,7 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     use Future::AsyncAwait;
     use HTTP::Tiny;
     use OpenTelemetry::Common 'config';
-    use OpenTelemetry::Constants -trace_export;
+    use OpenTelemetry::Constants -trace_export, 'INVALID_SPAN_ID';
     use OpenTelemetry::Proto;
     use OpenTelemetry::X;
     use OpenTelemetry;
@@ -129,7 +129,7 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     }
 
     my sub as_otlp_span ( $span ) {
-        {
+        my $data = {
             attributes               => as_otlp_attributes($span->attributes),
             dropped_attributes_count => $span->dropped_attributes,
             dropped_events_count     => $span->dropped_events,
@@ -146,6 +146,11 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
             trace_id                 => $span->trace_id,
             trace_state              => $span->trace_state->to_string,
         };
+
+        delete $data->{parent_span_id}
+            if $data->{parent_span_id} eq INVALID_SPAN_ID;
+
+        $data;
     }
 
     my sub as_otlp_scope ( $scope ) {
