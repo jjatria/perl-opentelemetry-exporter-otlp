@@ -11,11 +11,14 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
     use HTTP::Tiny;
     use OpenTelemetry::Common 'config';
     use OpenTelemetry::Constants -trace_export, 'INVALID_SPAN_ID';
+    use OpenTelemetry::Context;
     use OpenTelemetry::Proto;
+    use OpenTelemetry::Trace;
     use OpenTelemetry::X;
     use OpenTelemetry;
     use Ref::Util 'is_arrayref';
     use Scalar::Util 'refaddr';
+    use Syntax::Keyword::Dynamically;
     use URL::Encode 'url_decode';
 
     use Metrics::Any '$metrics', strict => 0;
@@ -252,6 +255,9 @@ class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::
 
     async method export ( $spans, $timeout = undef ) {
         return TRACE_EXPORT_FAILURE if $stopped;
+
+        dynamically OpenTelemetry::Context->current
+            = OpenTelemetry::Trace->untraced_context;
 
         my $request = make_request($spans);
         $self->$send_request( $request, $timeout );
