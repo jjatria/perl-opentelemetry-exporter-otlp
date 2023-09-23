@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use Log::Any::Adapter 'Stderr';
-use Test2::V0 -target => 'OpenTelemetry::SDK::Trace::Span::Exporter::OTLP';
+use Test2::V0 -target => 'OpenTelemetry::Exporter::OTLP';
 
 use HTTP::Tiny;
 use OpenTelemetry::Constants -trace_export, -span_kind, -span_status;
