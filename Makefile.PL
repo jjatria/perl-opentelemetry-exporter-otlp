@@ -19,10 +19,10 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => 0,
     "File::ShareDir::Install" => "0.06"
   },
-  "DISTNAME" => "OpenTelemetry-SDK-Trace-Span-Exporter-OTLP",
+  "DISTNAME" => "OpenTelemetry-Exporter-OTLP",
   "LICENSE" => "perl",
   "MIN_PERL_VERSION" => "5.020000",
-  "NAME" => "OpenTelemetry::SDK::Trace::Span::Exporter::OTLP",
+  "NAME" => "OpenTelemetry::Exporter::OTLP",
   "PREREQ_PM" => {
     "Compress::Zlib" => 0,
     "File::Share" => 0,

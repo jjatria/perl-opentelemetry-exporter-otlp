@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "OpenTelemetry-SDK-Trace-Span-Exporter-OTLP",
+   "name" : "OpenTelemetry-Exporter-OTLP",
    "no_index" : {
       "directory" : [
          "eg",
@@ -66,12 +66,12 @@
       }
    },
    "provides" : {
-      "OpenTelemetry::Proto" : {
-         "file" : "lib/OpenTelemetry/Proto.pm",
+      "OpenTelemetry::Exporter::OTLP" : {
+         "file" : "lib/OpenTelemetry/Exporter/OTLP.pm",
          "version" : "0.001"
       },
-      "OpenTelemetry::SDK::Trace::Span::Exporter::OTLP" : {
-         "file" : "lib/OpenTelemetry/SDK/Trace/Span/Exporter/OTLP.pm",
+      "OpenTelemetry::Proto" : {
+         "file" : "lib/OpenTelemetry/Proto.pm",
          "version" : "0.001"
       }
    },

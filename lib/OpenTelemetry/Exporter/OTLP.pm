@@ -1,11 +1,11 @@
 use Object::Pad ':experimental(init_expr)';
 # ABSTRACT: An OpenTelemetry Protocol span exporter
 
-package OpenTelemetry::SDK::Trace::Span::Exporter::OTLP;
+package OpenTelemetry::Exporter::OTLP;
 
 our $VERSION = '0.001';
 
-class OpenTelemetry::SDK::Trace::Span::Exporter::OTLP :does(OpenTelemetry::SDK::Trace::Span::Exporter) {
+class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Compress::Zlib;
     use Future::AsyncAwait;
     use HTTP::Tiny;
