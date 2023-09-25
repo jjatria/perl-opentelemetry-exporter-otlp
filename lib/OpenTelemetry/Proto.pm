@@ -28,7 +28,7 @@ for my $proto (qw(
     opentelemetry/proto/collector/trace/v1/trace_service.pb
 )) {
     my $path = dist_file(
-        'OpenTelemetry-SDK-Trace-Span-Exporter-OTLP',
+        'OpenTelemetry-Exporter-OTLP',
         $proto,
     );
 
