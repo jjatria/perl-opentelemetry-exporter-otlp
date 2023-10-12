@@ -7,7 +7,6 @@ our $VERSION = '0.001';
 
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Compress::Zlib;
-    use Future::AsyncAwait;
     use HTTP::Tiny;
     use OpenTelemetry::Common 'config';
     use OpenTelemetry::Constants -trace_export, 'INVALID_SPAN_ID';
@@ -253,7 +252,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         return TRACE_EXPORT_FAILURE;
     }
 
-    async method export ( $spans, $timeout = undef ) {
+    method export ( $spans, $timeout = undef ) {
         return TRACE_EXPORT_FAILURE if $stopped;
 
         dynamically OpenTelemetry::Context->current
@@ -263,12 +262,12 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         $self->$send_request( $request, $timeout );
     }
 
-    async method shutdown ( $timeout = undef ) {
+    method shutdown ( $timeout = undef ) {
         $stopped = 1;
         TRACE_EXPORT_SUCCESS;
     }
 
-    async method force_flush ( $timeout = undef ) {
+    method force_flush ( $timeout = undef ) {
         TRACE_EXPORT_SUCCESS;
     }
 }

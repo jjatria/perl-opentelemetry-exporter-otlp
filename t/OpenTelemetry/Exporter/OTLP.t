@@ -62,6 +62,6 @@ is CLASS->new->export([
         start_timestamp       => 0,
         status                => OpenTelemetry::Trace::Span::Status->ok,
     ),
-])->get, TRACE_EXPORT_SUCCESS;
+]), TRACE_EXPORT_SUCCESS;
 
 done_testing;
