@@ -32,7 +32,7 @@ for my $proto (qw(
         $proto,
     );
 
-    # $path = "share/$proto";
+    # my $path = "share/$proto";
 
     $g->load_serialized_string( path($path)->slurp );
 

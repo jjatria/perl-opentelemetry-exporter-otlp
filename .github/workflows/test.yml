@@ -37,6 +37,11 @@ jobs:
             perl: '5.38'
             cover: true
 
+          - name: ' (no dependencies)'
+            os: ubuntu-latest
+            perl: '5.38'
+            plain: true
+
     runs-on: ${{ matrix.os }}
 
     name: v${{ matrix.perl }} on ${{ matrix.os }}${{ matrix.name }}
@@ -48,7 +53,8 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
 
-      - uses: ConorMacBride/install-package@v1
+      - if: ${{ !matrix.plain }}
+        uses: ConorMacBride/install-package@v1
         with:
           apt: g++ cmake libprotobuf-dev libprotoc-dev
 

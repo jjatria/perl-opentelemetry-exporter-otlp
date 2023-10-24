@@ -41,10 +41,13 @@
          }
       },
       "runtime" : {
-         "requires" : {
+         "recommends" : {
             "Compress::Zlib" : "0",
+            "Google::ProtocolBuffers::Dynamic" : "0"
+         },
+         "requires" : {
             "File::Share" : "0",
-            "Google::ProtocolBuffers::Dynamic" : "0",
+            "JSON::MaybeXS" : "0",
             "Metrics::Any" : "0",
             "Object::Pad" : "0",
             "OpenTelemetry::SDK" : "0",
@@ -82,14 +85,14 @@
       },
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp.git",
+         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp",
          "web" : "https://github.com/jjatria/perl-opentelemetry-exporter-otlp"
       }
    },
    "version" : "0.001",
    "x_Dist_Zilla" : {
       "perl" : {
-         "version" : "5.036000"
+         "version" : "5.038000"
       },
       "plugins" : [
          {
@@ -536,7 +539,7 @@
          "version" : "6.030"
       }
    },
-   "x_generated_by_perl" : "v5.36.0",
+   "x_generated_by_perl" : "v5.38.0",
    "x_serialization_backend" : "Cpanel::JSON::XS version 4.37",
    "x_spdx_expression" : "Artistic-1.0-Perl OR GPL-1.0-or-later"
 }
