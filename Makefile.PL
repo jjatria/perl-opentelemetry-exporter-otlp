@@ -24,9 +24,8 @@ my %WriteMakefileArgs = (
   "MIN_PERL_VERSION" => "5.020000",
   "NAME" => "OpenTelemetry::Exporter::OTLP",
   "PREREQ_PM" => {
-    "Compress::Zlib" => 0,
     "File::Share" => 0,
-    "Google::ProtocolBuffers::Dynamic" => 0,
+    "JSON::MaybeXS" => 0,
     "Metrics::Any" => 0,
     "Object::Pad" => 0,
     "OpenTelemetry::SDK" => 0,
@@ -40,17 +39,16 @@ my %WriteMakefileArgs = (
   },
   "VERSION" => "0.001",
   "test" => {
-    "TESTS" => "t/*.t t/OpenTelemetry/*.t t/OpenTelemetry/SDK/Trace/Span/Exporter/*.t"
+    "TESTS" => "t/*.t t/OpenTelemetry/*.t t/OpenTelemetry/Exporter/*.t"
   }
 );
 
 
 my %FallbackPrereqs = (
-  "Compress::Zlib" => 0,
   "ExtUtils::MakeMaker" => 0,
   "File::Share" => 0,
   "File::Spec" => 0,
-  "Google::ProtocolBuffers::Dynamic" => 0,
+  "JSON::MaybeXS" => 0,
   "Metrics::Any" => 0,
   "Object::Pad" => 0,
   "OpenTelemetry::SDK" => 0,

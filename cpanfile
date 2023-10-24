@@ -1,10 +1,12 @@
-requires 'Compress::Zlib';
 requires 'File::Share';
-requires 'Google::ProtocolBuffers::Dynamic';
+requires 'JSON::MaybeXS';
 requires 'Metrics::Any';
 requires 'Object::Pad';
 requires 'OpenTelemetry::SDK';
 requires 'Path::Tiny';
+
+recommends 'Compress::Zlib';
+recommends 'Google::ProtocolBuffers::Dynamic';
 
 on test => sub {
     requires 'Test2::V0';

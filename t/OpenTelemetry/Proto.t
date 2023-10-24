@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use Test2::Require::Module 'Google::ProtocolBuffers::Dynamic';
 use Test2::V0 -target => 'OpenTelemetry::Proto';
 use JSON::PP;
 

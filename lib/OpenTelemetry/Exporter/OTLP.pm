@@ -6,12 +6,11 @@ package OpenTelemetry::Exporter::OTLP;
 our $VERSION = '0.001';
 
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
-    use Compress::Zlib;
+    use Feature::Compat::Try;
     use HTTP::Tiny;
     use OpenTelemetry::Common 'config';
     use OpenTelemetry::Constants -trace_export, 'INVALID_SPAN_ID';
     use OpenTelemetry::Context;
-    use OpenTelemetry::Proto;
     use OpenTelemetry::Trace;
     use OpenTelemetry::X;
     use OpenTelemetry;
@@ -20,6 +19,9 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Syntax::Keyword::Dynamically;
     use URL::Encode 'url_decode';
 
+    my $CAN_USE_PROTOBUF = eval { require 'Google::ProtocolBuffers::Dynamic'; 1 };
+    my $CAN_USE_GZIP     = eval { require 'Compress::Zlib'; 1 };
+
     use Metrics::Any '$metrics', strict => 0;
     my $logger = OpenTelemetry->logger;
 
@@ -27,6 +29,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     field $ua;
     field $endpoint;
     field $compression :param = undef;
+    field $encoder     :param = undef;
 
     ADJUSTPARAMS ($params) {
         $endpoint = delete $params->{endpoint}
@@ -41,7 +44,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
 
         $compression
             //= config(qw( EXPORTER_OTLP_TRACES_COMPRESSION EXPORTER_OTLP_COMPRESSION ))
-            // 'gzip';
+            // $CAN_USE_GZIP ? 'gzip' : 'none';
 
         my $timeout = delete $params->{timeout}
             // config(qw( EXPORTER_OTLP_TRACES_TIMEOUT EXPORTER_OTLP_TIMEOUT ))
@@ -68,146 +71,49 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             Invalid => "unsupported compression key $compression"
         ) unless $compression =~ /^(?:gzip|none)$/;
 
+        $headers->{'Content-Encoding'} = $compression unless $compression eq 'none';
+
+        $encoder //= do {
+            my $default  = $CAN_USE_PROTOBUF ? 'http/protobuf' : 'http/json';
+            my $protocol = config('EXPORTER_OTLP_PROTOCOL') // $default;
+
+            $logger->warn(
+                "Ignoring unsupported protocol. Defaulting to $default",
+                { protocol => $protocol },
+            ) unless $protocol =~ /^http\/(protobuf|json)$/;
+
+            my $class = 'OpenTelemetry::Exporter::OTLP::Encoder::';
+            $class .= 'Protobuf' if $1 eq 'protobuf';
+            $class .= 'JSON'     if $1 eq 'json';
+
+            try {
+                Module::Runtime::require_module $class;
+                $class->new;
+            }
+            catch ($e) {
+                $logger->warn(
+                    'Could not load OTLP encoder class. Defaulting to JSON',
+                    { class => $class, error => $e },
+                );
+
+                require OpenTelemetry::Exporter::OTLP::Encoder::JSON;
+                OpenTelemetry::Exporter::OTLP::Encoder::JSON->new;
+            }
+        };
+
         $ua = HTTP::Tiny->new(
             timeout         => $timeout,
             default_headers => {
                 %$headers,
-                'Content-Type' => 'application/x-protobuf',
+                'Content-Type' => $encoder->content_type,
             },
         );
-    }
-
-    my sub as_otlp_single_value ( $v ) {
-        { string_value => $v }
-    }
-
-    my sub as_otlp_value ( $v ) {
-        is_arrayref $v
-            ? { array_value => { values => [ map as_otlp_single_value($_), @$v ] } }
-            : as_otlp_single_value($v)
-    }
-
-    my sub as_otlp_attributes ( $hash ) {
-        [
-            map {
-                {
-                    key   => $_,
-                    value => as_otlp_value($hash->{$_}),
-                };
-            } keys %$hash,
-        ];
-    }
-
-    my sub as_otlp_resource ( $resource ) {
-        {
-            attributes               => as_otlp_attributes( $resource->attributes ),
-            dropped_attributes_count => $resource->dropped_attributes,
-        };
-    }
-
-    my sub as_otlp_event ( $event ) {
-        {
-            attributes               => as_otlp_attributes($event->attributes),
-            dropped_attributes_count => $event->dropped_attributes,
-            name                     => $event->name,
-            time_unix_nano           => $event->timestamp * 1_000_000_000,
-        };
-    }
-
-    my sub as_otlp_link ( $link ) {
-        {
-            attributes               => as_otlp_attributes($link->attributes),
-            dropped_attributes_count => $link->dropped_attributes,
-            span_id                  => $link->context->span_id,
-            trace_id                 => $link->context->trace_id,
-        };
-    }
-
-    my sub as_otlp_status ( $status ) {
-        {
-            code    => $status->code,
-            message => $status->description,
-        };
-    }
-
-    my sub as_otlp_span ( $span ) {
-        my $data = {
-            attributes               => as_otlp_attributes($span->attributes),
-            dropped_attributes_count => $span->dropped_attributes,
-            dropped_events_count     => $span->dropped_events,
-            dropped_links_count      => $span->dropped_links,
-            end_time_unix_nano       => $span->end_timestamp   * 1_000_000_000,
-            events                   => [ map as_otlp_event($_), $span->events ],
-            kind                     => $span->kind,
-            links                    => [ map as_otlp_link($_),  $span->links  ],
-            name                     => $span->name,
-            parent_span_id           => $span->parent_span_id,
-            span_id                  => $span->span_id,
-            start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
-            status                   => as_otlp_status($span->status),
-            trace_id                 => $span->trace_id,
-            trace_state              => $span->trace_state->to_string,
-        };
-
-        delete $data->{parent_span_id}
-            if $data->{parent_span_id} eq INVALID_SPAN_ID;
-
-        $data;
-    }
-
-    my sub as_otlp_scope ( $scope ) {
-        {
-            attributes               => as_otlp_attributes( $scope->attributes ),
-            dropped_attributes_count => $scope->dropped_attributes,
-            name                     => $scope->name,
-            version                  => $scope->version,
-        };
-    }
-
-    my sub make_request ( $spans ) {
-        my ( %request, %resources );
-
-        for (@$spans) {
-            my $key = refaddr $_->resource;
-            $resources{ $key } //= [ $_->resource, [] ];
-            push @{ $resources{ $key }[1] }, $_;
-        }
-
-        for ( keys %resources ) {
-            my ( $resource, $spans ) = @{ $resources{$_} };
-
-            my %scopes;
-
-            for (@$spans) {
-                my $key = refaddr $_->instrumentation_scope;
-
-                $scopes{ $key } //= [ $_->instrumentation_scope, [] ];
-                push @{ $scopes{ $key }[1] }, $_;
-            }
-
-            push @{ $request{resource_spans} //= [] }, {
-                resource => as_otlp_resource($resource),
-                scope_spans => [
-                    map {
-                        my ( $scope, $spans ) = @$_;
-                        {
-                            scope => as_otlp_scope($scope),
-                            spans => [ map as_otlp_span($_), @$spans ],
-                        };
-                    } values %scopes,
-                ],
-                schema_url => $resource->schema_url,
-            };
-        }
-
-        OpenTelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest
-            ->new_and_check(\%request);
     }
 
     method $send_request ( $data, $timeout ) {
         # TODO: timeouts, redirection, more error handling, and retries
 
-        my %request = ( content => $data->encode );
+        my %request = ( content => $data );
 
         $metrics->report_distribution(
             'otel.otlp_exporter.message.uncompressed_size',
@@ -215,11 +121,14 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         );
 
         if ( $compression eq 'gzip' ) {
-            $request{headers}{'Content-Encoding'} = 'gzip';
+            require Compress::Zlib;
             $request{content} = Compress::Zlib::memGzip($request{content});
 
             unless ($request{content}) {
-                OpenTelemetry->handle_error( message => "Error compressing data: $gzerrno" );
+                OpenTelemetry->handle_error(
+                    message => "Error compressing data: $Compress::Zlib::gzerrno"
+                );
+
                 $metrics->inc_counter(
                     'otel.otlp_exporter.failure',
                     { reason => 'zlib_error' },
@@ -258,7 +167,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         dynamically OpenTelemetry::Context->current
             = OpenTelemetry::Trace->untraced_context;
 
-        my $request = make_request($spans);
+        my $request = $encoder->encode($spans);
         $self->$send_request( $request, $timeout );
     }
 
