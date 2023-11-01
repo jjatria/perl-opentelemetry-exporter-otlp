@@ -70,11 +70,19 @@
    "provides" : {
       "OpenTelemetry::Exporter::OTLP" : {
          "file" : "lib/OpenTelemetry/Exporter/OTLP.pm",
-         "version" : "0.001"
+         "version" : "0.010"
+      },
+      "OpenTelemetry::Exporter::OTLP::Encoder::JSON" : {
+         "file" : "lib/OpenTelemetry/Exporter/OTLP/Encoder/JSON.pm",
+         "version" : "0.010"
+      },
+      "OpenTelemetry::Exporter::OTLP::Encoder::Protobuf" : {
+         "file" : "lib/OpenTelemetry/Exporter/OTLP/Encoder/Protobuf.pm",
+         "version" : "0.010"
       },
       "OpenTelemetry::Proto" : {
          "file" : "lib/OpenTelemetry/Proto.pm",
-         "version" : "0.001"
+         "version" : "0.010"
       }
    },
    "release_status" : "stable",
@@ -84,11 +92,11 @@
       },
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp",
+         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp.git",
          "web" : "https://github.com/jjatria/perl-opentelemetry-exporter-otlp"
       }
    },
-   "version" : "0.001",
+   "version" : "0.010",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.038000"
@@ -222,7 +230,7 @@
                   "changelog" : "Changes"
                },
                "Dist::Zilla::Role::Git::Repo" : {
-                  "git_version" : "2.34.1",
+                  "git_version" : "2.40.1",
                   "repo_root" : "."
                }
             },
@@ -302,7 +310,7 @@
                   "changelog" : "Changes"
                },
                "Dist::Zilla::Role::Git::Repo" : {
-                  "git_version" : "2.34.1",
+                  "git_version" : "2.40.1",
                   "repo_root" : "."
                },
                "Dist::Zilla::Role::Git::StringFormatter" : {
@@ -319,12 +327,12 @@
                   "branch" : null,
                   "changelog" : "Changes",
                   "signed" : 0,
-                  "tag" : "0.001",
+                  "tag" : "0.010",
                   "tag_format" : "%v",
                   "tag_message" : ""
                },
                "Dist::Zilla::Role::Git::Repo" : {
-                  "git_version" : "2.34.1",
+                  "git_version" : "2.40.1",
                   "repo_root" : "."
                },
                "Dist::Zilla::Role::Git::StringFormatter" : {
@@ -368,7 +376,7 @@
                   "changelog" : "Changes"
                },
                "Dist::Zilla::Role::Git::Repo" : {
-                  "git_version" : "2.34.1",
+                  "git_version" : "2.40.1",
                   "repo_root" : "."
                },
                "Dist::Zilla::Role::Git::StringFormatter" : {
@@ -464,7 +472,7 @@
             "class" : "Dist::Zilla::Plugin::Git::Contributors",
             "config" : {
                "Dist::Zilla::Plugin::Git::Contributors" : {
-                  "git_version" : "2.34.1",
+                  "git_version" : "2.40.1",
                   "include_authors" : 0,
                   "include_releaser" : 1,
                   "order_by" : "name",
