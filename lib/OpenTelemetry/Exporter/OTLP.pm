@@ -17,8 +17,15 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Syntax::Keyword::Dynamically;
     use URL::Encode 'url_decode';
 
-    my $CAN_USE_PROTOBUF = eval { require 'Google::ProtocolBuffers::Dynamic'; 1 };
-    my $CAN_USE_GZIP     = eval { require 'Compress::Zlib'; 1 };
+    my $PROTOCOL = eval {
+        require 'Google::ProtocolBuffers::Dynamic';
+        'http/protobuf';
+    } // 'http/json';
+
+    my $COMPRESSION = eval {
+        require 'Compress::Zlib';
+        'gzip';
+    } // 'none';
 
     use Metrics::Any '$metrics', strict => 0;
     my $logger = OpenTelemetry->logger;
@@ -27,7 +34,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     field $ua;
     field $endpoint;
     field $compression :param = undef;
-    field $encoder     :param = undef;
+    field $encoder;
 
     ADJUSTPARAMS ($params) {
         $endpoint = delete $params->{endpoint}
@@ -42,7 +49,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
 
         $compression
             //= config(qw( EXPORTER_OTLP_TRACES_COMPRESSION EXPORTER_OTLP_COMPRESSION ))
-            // $CAN_USE_GZIP ? 'gzip' : 'none';
+            // $COMPRESSION;
 
         my $timeout = delete $params->{timeout}
             // config(qw( EXPORTER_OTLP_TRACES_TIMEOUT EXPORTER_OTLP_TIMEOUT ))
@@ -62,22 +69,22 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         } unless ref $headers;
 
         die OpenTelemetry::X->create(
-            Invalid => "invalid url for OTLP exporter $endpoint"
+            Invalid => "invalid URL for OTLP exporter: $endpoint"
         ) unless "$endpoint" =~ m|^https?://|;
 
         die OpenTelemetry::X->create(
-            Invalid => "unsupported compression key $compression"
+            Unsupported => "unsupported compression key for OTLP exporter: $compression"
         ) unless $compression =~ /^(?:gzip|none)$/;
 
         $headers->{'Content-Encoding'} = $compression unless $compression eq 'none';
 
-        $encoder //= do {
-            my $default  = $CAN_USE_PROTOBUF ? 'http/protobuf' : 'http/json';
-            my $protocol = config('EXPORTER_OTLP_PROTOCOL') // $default;
+        $encoder = do {
+            my $protocol = delete $params->{protocol}
+                // config('EXPORTER_OTLP_PROTOCOL')
+                // $PROTOCOL;
 
-            $logger->warn(
-                "Ignoring unsupported protocol. Defaulting to $default",
-                { protocol => $protocol },
+            die OpenTelemetry::X->create(
+                Unsupported => "unsupported protocol for OTLP exporter: $protocol",
             ) unless $protocol =~ /^http\/(protobuf|json)$/;
 
             my $class = 'OpenTelemetry::Exporter::OTLP::Encoder::';
