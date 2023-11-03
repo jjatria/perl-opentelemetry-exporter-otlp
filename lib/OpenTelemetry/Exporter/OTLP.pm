@@ -9,13 +9,11 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
     use HTTP::Tiny;
     use OpenTelemetry::Common 'config';
-    use OpenTelemetry::Constants -trace_export, 'INVALID_SPAN_ID';
+    use OpenTelemetry::Constants -trace_export;
     use OpenTelemetry::Context;
     use OpenTelemetry::Trace;
     use OpenTelemetry::X;
     use OpenTelemetry;
-    use Ref::Util 'is_arrayref';
-    use Scalar::Util 'refaddr';
     use Syntax::Keyword::Dynamically;
     use URL::Encode 'url_decode';
 
