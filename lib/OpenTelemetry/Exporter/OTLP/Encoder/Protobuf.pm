@@ -1,5 +1,5 @@
 use Object::Pad ':experimental(init_expr)';
-# ABSTRACT: An OpenTelemetry Protocol span exporter
+# ABSTRACT: A Protobuf encoder for the OTLP exporter
 
 package OpenTelemetry::Exporter::OTLP::Encoder::Protobuf;
 
