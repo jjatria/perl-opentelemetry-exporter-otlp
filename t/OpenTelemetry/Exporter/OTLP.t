@@ -3,65 +3,58 @@
 use Log::Any::Adapter 'Stderr';
 use Test2::V0 -target => 'OpenTelemetry::Exporter::OTLP';
 
+use experimental 'signatures';
+
 use HTTP::Tiny;
-use OpenTelemetry::Constants -trace_export, -span_kind, -span_status;
+use OpenTelemetry::Constants
+    'INVALID_SPAN_ID',
+    -trace_export,
+    -span_kind,
+    -span_status;
 use OpenTelemetry::Trace::SpanContext;
-use OpenTelemetry::SDK::Trace::Span::Readable;
-use OpenTelemetry::SDK::Resource;
-use OpenTelemetry::SDK::InstrumentationScope;
 use OpenTelemetry::Trace::Span::Status;
 
-my $guard = mock 'HTTP::Tiny' => override => [
+my $http_mock = mock 'HTTP::Tiny' => override => [
     request => sub { +{ success => 1 } },
 ];
 
-my $a_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'A' );
-my $b_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'B' );
-
-my $a_resource = OpenTelemetry::SDK::Resource->new( attributes => { name => 'A' } );
-my $b_resource = OpenTelemetry::SDK::Resource->new( attributes => { name => 'B' } );
+my $span_mock = mock 'Local::Span' => add => [
+    attributes         => sub { {} },
+    dropped_attributes => 0,
+    dropped_events     => 0,
+    dropped_links      => 0,
+    end_timestamp      => 100,
+    events             => sub { },
+    kind               => sub { SPAN_KIND_INTERNAL },
+    links              => sub { },
+    name               => sub { shift->{name} //= 'X' },
+    parent_span_id     => sub { INVALID_SPAN_ID },
+    span_id            => sub { shift->{context}->span_id     },
+    start_timestamp    => 0,
+    status             => sub { OpenTelemetry::Trace::Span::Status->ok },
+    trace_flags        => sub { shift->{context}->trace_flags },
+    trace_id           => sub { shift->{context}->trace_id    },
+    trace_state        => sub { shift->{context}->trace_state },
+    new => sub ( $class, %data ) {
+        $data{context} //= OpenTelemetry::Trace::SpanContext->new;
+        bless \%data, $class;
+    },
+    instrumentation_scope => sub {
+        shift->{scope} //= mock {} => add => [ name => 'X' ];
+    },
+    resource => sub {
+        shift->{resource} //= mock {} => add => [
+            attributes         => sub { +{} },
+            dropped_attributes => 0,
+        ];
+    },
+];
 
 is CLASS->new->export([
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $a_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'A-A',
-        resource              => $a_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
-    ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $a_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'A-B',
-        resource              => $b_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
-    ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $b_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'B-A',
-        resource              => $a_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
-    ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $b_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'B-B',
-        resource              => $b_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
-    ),
+    Local::Span->new,
+    Local::Span->new,
+    Local::Span->new,
+    Local::Span->new,
 ]), TRACE_EXPORT_SUCCESS;
 
 done_testing;

@@ -28,7 +28,6 @@ my %WriteMakefileArgs = (
     "JSON::MaybeXS" => 0,
     "Metrics::Any" => 0,
     "Object::Pad" => 0,
-    "OpenTelemetry::SDK" => 0,
     "Path::Tiny" => 0
   },
   "TEST_REQUIRES" => {
@@ -51,7 +50,6 @@ my %FallbackPrereqs = (
   "JSON::MaybeXS" => 0,
   "Metrics::Any" => 0,
   "Object::Pad" => 0,
-  "OpenTelemetry::SDK" => 0,
   "Path::Tiny" => 0,
   "Test2::V0" => 0,
   "Test::More" => 0

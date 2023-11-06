@@ -2,7 +2,6 @@ requires 'File::Share';
 requires 'JSON::MaybeXS';
 requires 'Metrics::Any';
 requires 'Object::Pad';
-requires 'OpenTelemetry::SDK';
 requires 'Path::Tiny';
 
 recommends 'Compress::Zlib';

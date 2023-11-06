@@ -2,60 +2,83 @@
 
 use Test2::V0 -target => 'OpenTelemetry::Exporter::OTLP::Encoder::JSON';
 
+use experimental 'signatures';
+
 use JSON::MaybeXS;
-use OpenTelemetry::Constants -trace_export, -span_kind, -span_status;
+use OpenTelemetry::Constants
+    'INVALID_SPAN_ID',
+    -trace_export,
+    -span_kind,
+    -span_status;
 use OpenTelemetry::Trace::SpanContext;
-use OpenTelemetry::SDK::Trace::Span::Readable;
-use OpenTelemetry::SDK::Resource;
-use OpenTelemetry::SDK::InstrumentationScope;
 use OpenTelemetry::Trace::Span::Status;
 
-my $a_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'A' );
-my $b_scope = OpenTelemetry::SDK::InstrumentationScope->new( name => 'B' );
+my $scope_mock = mock 'Local::Scope' => add => [
+    new                => sub ( $class, %data ) { bless \%data, $class },
+    dropped_attributes => 0,
+    version            => '',
+    name               => sub { shift->{name} //= 'SCOPE' },
+    attributes         => sub { +{} },
+];
 
-my $a_resource = OpenTelemetry::SDK::Resource->new( attributes => { name => 'A' } );
-my $b_resource = OpenTelemetry::SDK::Resource->new( attributes => { name => 'B' } );
+my $resource_mock = mock 'Local::Resource' => add => [
+    new                => sub ( $class, %data ) { bless \%data, $class },
+    dropped_attributes => 0,
+    schema_url         => '',
+    attributes         => sub { shift->{attributes} //= {} },
+];
+
+my $a_scope = Local::Scope->new( name => 'A' );
+my $b_scope = Local::Scope->new( name => 'B' );
+
+my $a_resource = Local::Resource->new( attributes => { name => 'A' } );
+my $b_resource = Local::Resource->new( attributes => { name => 'B' } );
+
+my $span_mock = mock 'Local::Span' => add => [
+    new => sub ( $class, %data ) {
+        $data{context} //= OpenTelemetry::Trace::SpanContext->new;
+        bless \%data, $class;
+    },
+    attributes            => sub { {} },
+    dropped_attributes    => 0,
+    dropped_events        => 0,
+    dropped_links         => 0,
+    end_timestamp         => 100,
+    events                => sub { },
+    kind                  => sub { SPAN_KIND_INTERNAL },
+    links                 => sub { },
+    name                  => sub { shift->{name} //= 'X' },
+    parent_span_id        => sub { INVALID_SPAN_ID },
+    span_id               => sub { shift->{context}->span_id     },
+    start_timestamp       => 0,
+    status                => sub { OpenTelemetry::Trace::Span::Status->ok },
+    trace_flags           => sub { shift->{context}->trace_flags },
+    trace_id              => sub { shift->{context}->trace_id    },
+    trace_state           => sub { shift->{context}->trace_state },
+    instrumentation_scope => sub { shift->{scope} //= Local::Scope->new },
+    resource              => sub { shift->{resource} //= Local::Resource->new },
+];
 
 is decode_json(CLASS->new->encode([
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $a_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'A-A',
-        resource              => $a_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
+    Local::Span->new(
+        scope    => $a_scope,
+        name     => 'A-A',
+        resource => $a_resource,
     ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $a_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'A-B',
-        resource              => $b_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
+    Local::Span->new(
+        scope    => $a_scope,
+        name     => 'A-B',
+        resource => $b_resource,
     ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $b_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'B-A',
-        resource              => $a_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
+    Local::Span->new(
+        scope    => $b_scope,
+        name     => 'B-A',
+        resource => $a_resource,
     ),
-    OpenTelemetry::SDK::Trace::Span::Readable->new(
-        context               => OpenTelemetry::Trace::SpanContext->new,
-        end_timestamp         => 100,
-        instrumentation_scope => $b_scope,
-        kind                  => SPAN_KIND_INTERNAL,
-        name                  => 'B-B',
-        resource              => $b_resource,
-        start_timestamp       => 0,
-        status                => OpenTelemetry::Trace::Span::Status->ok,
+    Local::Span->new(
+        scope    => $b_scope,
+        name     => 'B-B',
+        resource => $b_resource,
     ),
 ])), {
     resourceSpans => array {
