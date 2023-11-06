@@ -8,6 +8,7 @@ our $VERSION = '0.010';
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
     use HTTP::Tiny;
+    use Module::Runtime 'require_module';
     use OpenTelemetry::Common qw( config maybe_timeout timeout_timestamp );
     use OpenTelemetry::Constants -trace_export;
     use OpenTelemetry::Context;
@@ -21,12 +22,12 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use URL::Encode 'url_decode';
 
     my $PROTOCOL = eval {
-        require 'Google::ProtocolBuffers::Dynamic';
+        require Google::ProtocolBuffers::Dynamic;
         'http/protobuf';
     } // 'http/json';
 
     my $COMPRESSION = eval {
-        require 'Compress::Zlib';
+        require Compress::Zlib;
         'gzip';
     } // 'none';
 
@@ -96,7 +97,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             $class .= 'JSON'     if $1 eq 'json';
 
             try {
-                Module::Runtime::require_module $class;
+                require_module $class;
                 $class->new;
             }
             catch ($e) {

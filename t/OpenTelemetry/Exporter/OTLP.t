@@ -40,12 +40,18 @@ my $span_mock = mock 'Local::Span' => add => [
         bless \%data, $class;
     },
     instrumentation_scope => sub {
-        shift->{scope} //= mock {} => add => [ name => 'X' ];
+        shift->{scope} //= mock {} => add => [
+            attributes         => sub { {} },
+            dropped_attributes => 0,
+            name               => 'X',
+            version            => '',
+        ];
     },
     resource => sub {
         shift->{resource} //= mock {} => add => [
             attributes         => sub { +{} },
             dropped_attributes => 0,
+            schema_url         => '',
         ];
     },
 ];

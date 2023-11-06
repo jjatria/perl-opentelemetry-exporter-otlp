@@ -50,8 +50,8 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
         {
             attributes               => $self->encode_attributes($link->attributes),
             dropped_attributes_count => $link->dropped_attributes,
-            span_id                  => $self->encode_id( $link->context->span_id ),
-            trace_id                 => $self->encode_id( $link->context->trace_id ),
+            span_id                  => $link->context->span_id,
+            trace_id                 => $link->context->trace_id,
         };
     }
 
@@ -66,15 +66,15 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
             kind                     => $span->kind,
             links                    => [ map $self->encode_link($_),  $span->links  ],
             name                     => $span->name,
-            span_id                  => $self->encode_id( $span->span_id ),
+            span_id                  => $span->span_id,
             start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
             status                   => $self->encode_status($span->status),
-            trace_id                 => $self->encode_id( $span->trace_id ),
+            trace_id                 => $span->trace_id,
             trace_state              => $span->trace_state->to_string,
         };
 
         my $parent = $span->parent_span_id;
-        $data->{parent_span_id} = encode_id($parent)
+        $data->{parent_span_id} = $parent
             unless $parent eq INVALID_SPAN_ID;
 
         $data;
