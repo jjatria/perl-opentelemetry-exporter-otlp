@@ -8,13 +8,16 @@ our $VERSION = '0.010';
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
     use HTTP::Tiny;
-    use OpenTelemetry::Common 'config';
+    use OpenTelemetry::Common qw( config maybe_timeout timeout_timestamp );
     use OpenTelemetry::Constants -trace_export;
     use OpenTelemetry::Context;
     use OpenTelemetry::Trace;
     use OpenTelemetry::X;
     use OpenTelemetry;
     use Syntax::Keyword::Dynamically;
+    use Syntax::Keyword::Match;
+    use Time::Piece;
+    use Time::HiRes 'sleep';
     use URL::Encode 'url_decode';
 
     my $PROTOCOL = eval {
@@ -35,6 +38,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     field $endpoint;
     field $compression :param = undef;
     field $encoder;
+    field $max_retries = 5;
 
     ADJUSTPARAMS ($params) {
         $endpoint = delete $params->{endpoint}
@@ -115,9 +119,31 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         );
     }
 
-    method $send_request ( $data, $timeout ) {
-        # TODO: timeouts, redirection, more error handling, and retries
+    method $maybe_backoff ( $count, $reason, $after = 0 ) {
+        $metrics->inc_counter(
+            'otel.otlp_exporter.failure',
+            { reason => $reason },
+        );
 
+        return if $count > $max_retries;
+
+        my $sleep;
+        try {
+            my $date = Time::Piece->strptime($after, '%a, %d %b %Y %T %Z');
+            $sleep = ( $date - localtime )->seconds;
+        }
+        catch($e) {
+            die $e unless $e =~ /^Error parsing time/;
+            $sleep = $after if $after > 0;
+        }
+        $sleep //= int rand 2 ** $count;
+
+        sleep $sleep + rand;
+
+        return 1;
+    }
+
+    method $send_request ( $data, $timeout ) {
         my %request = ( content => $data );
 
         $metrics->report_distribution(
@@ -148,22 +174,83 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             );
         }
 
-        my $res = $ua->post( $endpoint, \%request );
+        my $start = timeout_timestamp;
+        my $retries = 0;
+        while (1) {
+            my $remaining = maybe_timeout $timeout, $start;
+            return TRACE_EXPORT_TIMEOUT if $timeout && !$remaining;
 
-        return TRACE_EXPORT_SUCCESS if $res->{success};
+            # We are changing the state of the user-agent here
+            # There doesn't seem to be another way to do this.
+            # As long as this exporter is running with the Batch
+            # processor, it should only be processing one request
+            # at a time, so this should not be a problem.
+            $ua->timeout($remaining);
 
-        if ( $res->{status} == 404 ) {
-            OpenTelemetry->handle_error(
-                message => "OTLP exporter received HTTP code 404 Not Found for URI: '$endpoint'",
+            my $request_start = timeout_timestamp;
+            my $res = $ua->post( $endpoint, \%request );
+            my $request_end = timeout_timestamp;
+
+            $metrics->set_gauge_to(
+                'otel.otlp_exporter.request_duration',
+                $request_end - $request_start,
+                { status => $res->{status} },
             );
+
+            return TRACE_EXPORT_SUCCESS if $res->{success};
+
+            match ( $res->{status} : =~ ) {
+                case( m/^ 599 $/x ) {
+                    my $reason = do {
+                        match ( $res->{content} : =~ ) {
+                            case(m/^Timed out/)                { 'timeout' }
+                            case(m/^Could not connect /)       { 'socket_error' }
+                            case(m/^Could not .* socket /)     { 'socket_error' }
+                            case(m/^Socket closed /)           { 'socket_error' }
+                            case(m/^Error halting .* SSL /)    { 'ssl_error' }
+                            case(m/^SSL connection failed /)   { 'ssl_error' }
+                            case(m/^Unexpected end of stream/) { 'eof_error' }
+                            case(m/^Cannot parse/)             { 'parse_error' }
+                            case(m/^Wide character in write/)  { 'write_error' }
+                            default {
+                                $metrics->inc_counter(
+                                    'otel.otlp_exporter.failure',
+                                    { reason => $res->{status} },
+                                );
+                                OpenTelemetry->handle_error(
+                                    message => "Unhandled error sending OTLP request: $res->{content}",
+                                );
+                                return TRACE_EXPORT_FAILURE;
+                            }
+                        }
+                    };
+
+                    redo if $self->$maybe_backoff( ++$retries, $reason );
+                }
+                case( m/^(?: 429 | 503 )$/x ) {
+                    redo if $self->$maybe_backoff(
+                        ++$retries,
+                        $res->{status},
+                        $res->{headers}{'retry-after'},
+                    );
+                }
+                case( m/^(?: 408 | 502 | 504 )$/x ) {
+                    redo if $self->$maybe_backoff( ++$retries, $res->{status} );
+                }
+                case( m/^(?: 4 | 5 ) \d{2} $/ax ) {
+                    $metrics->inc_counter(
+                        'otel.otlp_exporter.failure',
+                        { reason => $res->{status} },
+                    );
+                    # TODO: Log response
+                }
+                case( m/^ 3 \d{2} /ax ) {
+                    # TODO: Handle redirection
+                }
+            }
+
+            return TRACE_EXPORT_FAILURE;
         }
-
-        $metrics->inc_counter(
-            'otel.otlp_exporter.failure',
-            { reason => $res->{status} },
-        );
-
-        return TRACE_EXPORT_FAILURE;
     }
 
     method export ( $spans, $timeout = undef ) {

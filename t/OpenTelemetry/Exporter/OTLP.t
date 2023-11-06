@@ -15,7 +15,7 @@ use OpenTelemetry::Trace::SpanContext;
 use OpenTelemetry::Trace::Span::Status;
 
 my $http_mock = mock 'HTTP::Tiny' => override => [
-    request => sub { +{ success => 1 } },
+    request => sub { +{ success => 1, status => 200 } },
 ];
 
 my $span_mock = mock 'Local::Span' => add => [

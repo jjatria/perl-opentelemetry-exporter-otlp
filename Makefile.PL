@@ -24,11 +24,16 @@ my %WriteMakefileArgs = (
   "MIN_PERL_VERSION" => "5.020000",
   "NAME" => "OpenTelemetry::Exporter::OTLP",
   "PREREQ_PM" => {
+    "Feature::Compat::Try" => 0,
     "File::Share" => 0,
+    "HTTP::Tiny" => 0,
     "JSON::MaybeXS" => 0,
     "Metrics::Any" => 0,
     "Object::Pad" => 0,
-    "Path::Tiny" => 0
+    "Path::Tiny" => 0,
+    "Syntax::Keyword::Dynamically" => 0,
+    "Syntax::Keyword::Match" => 0,
+    "Time::Piece" => 0
   },
   "TEST_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0,
@@ -45,14 +50,19 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "ExtUtils::MakeMaker" => 0,
+  "Feature::Compat::Try" => 0,
   "File::Share" => 0,
   "File::Spec" => 0,
+  "HTTP::Tiny" => 0,
   "JSON::MaybeXS" => 0,
   "Metrics::Any" => 0,
   "Object::Pad" => 0,
   "Path::Tiny" => 0,
+  "Syntax::Keyword::Dynamically" => 0,
+  "Syntax::Keyword::Match" => 0,
   "Test2::V0" => 0,
-  "Test::More" => 0
+  "Test::More" => 0,
+  "Time::Piece" => 0
 );
 
 
