@@ -208,11 +208,11 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                             case(m/^Could not connect /)       { 'socket_error' }
                             case(m/^Could not .* socket /)     { 'socket_error' }
                             case(m/^Socket closed /)           { 'socket_error' }
+                            case(m/^Wide character in write/)  { 'socket_error' }
                             case(m/^Error halting .* SSL /)    { 'ssl_error' }
                             case(m/^SSL connection failed /)   { 'ssl_error' }
                             case(m/^Unexpected end of stream/) { 'eof_error' }
                             case(m/^Cannot parse/)             { 'parse_error' }
-                            case(m/^Wide character in write/)  { 'write_error' }
                             default {
                                 $metrics->inc_counter(
                                     'otel.otlp_exporter.failure',

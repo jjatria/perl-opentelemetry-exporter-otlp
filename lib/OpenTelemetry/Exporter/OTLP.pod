@@ -95,6 +95,29 @@ Reported with the following attributes:
 
 =over
 
+=item C<timeout>
+
+The connection to the collector timed out.
+
+=item C<socket_error>
+
+There was a socket-related error while sending the data to the collector.
+This could be that the socket couldn't be opened, or closed, or written
+to, or otherwise properly configured.
+
+=item C<ssl_error>
+
+There was an error either establishing an SSL connection, or terminating a
+previous SSL connection.
+
+=item C<eof_error>
+
+There was an unexpected end of stream.
+
+=item C<parse_error>
+
+There was an error parsing the URL to send the exported data to.
+
 =item C<zlib_error>
 
 An error was encountered when compressing payload.
@@ -116,6 +139,19 @@ not sent if no compression is done.
 =item C<otel.otlp_exporter.message.uncompressed_size>
 
 Set to the size of the request content before compression is done.
+
+=item C<otel.otlp_exporter.request_duration>
+
+Set to the number of seconds, as a fraction, that the request took to
+complete. It is set with the following attributes:
+
+=over
+
+=item C<status>
+
+Set to the HTTP status code of the response.
+
+=back
 
 =back
 
