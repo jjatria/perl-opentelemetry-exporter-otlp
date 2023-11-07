@@ -111,12 +111,36 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             }
         };
 
+        my %ssl_options;
+        {
+            my $ca = delete $params->{certificate} // config(qw(
+                EXPORTER_OTLP_TRACES_CERTIFICATE
+                EXPORTER_OTLP_CERTIFICATE
+            ));
+
+            my $key = delete $params->{client_key} // config(qw(
+                EXPORTER_OTLP_TRACES_CLIENT_KEY
+                EXPORTER_OTLP_CLIENT_KEY
+            ));
+
+            my $cert = delete $params->{client_certificate} // config(qw(
+                EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE
+                EXPORTER_OTLP_CLIENT_CERTIFICATE
+            ));
+
+            $ssl_options{SSL_ca_file}   = $ca   if $ca;
+            $ssl_options{SSL_key_file}  = $key  if $key;
+            $ssl_options{SSL_cert_file} = $cert if $cert;
+        };
+
         $ua = HTTP::Tiny->new(
             timeout         => $timeout,
+            agent           => "OTel-OTLP-Exporter-Perl/$VERSION",
             default_headers => {
                 %$headers,
                 'Content-Type' => $encoder->content_type,
             },
+            %ssl_options ? ( SSL_options => \%ssl_options ) : (),
         );
     }
 

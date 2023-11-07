@@ -24,14 +24,55 @@ that module's documentation for details on the behaviours it provides.
 =head2 new
 
     $exporter = OpenTelemetry::Exporter::OTLP->new(
-        compression => $compression, # optional
-        protocol    => $protocol,    # optional
+        certificate        => $file_path,           # optional
+        client_certificate => $file_path,           # optional
+        client_key         => $file_path,           # optional
+        compression        => $compression,         # optional
+        endpoint           => $url,                 # optional
+        headers            => \%headers || $string, # optional
+        protocol           => $protocol,            # optional
+        timeout            => $seconds,             # optional
     );
 
 Constructs a new instance of the exporter. It takes the following named
 parameters, both of which are optional:
 
 =over
+
+=item certificate
+
+A string with the path to a file containing the trusted certificate to use
+when verifying a server's TLS credentials. If not set, this will be read from
+L<"OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE>,
+or
+L<"OTEL_EXPORTER_OTLP_CERTIFICATE"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_CERTIFICATE>
+if that variable is not set.
+
+If none of those values are set, this will remain undefined.
+
+=item client_certificate
+
+A string with the path to a file containing the client certificate/chain trust
+for the client's private key use in mTLS communication. The file should be in
+PEM format. If not set, this will be read from
+L<"OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_CLIENT_CLIENT_CERTIFICATE>,
+or
+L<"OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE>
+if that variable is not set.
+
+If none of those values are set, this will remain undefined.
+
+=item client_key
+
+A string with the path to a file containing the client's private key to use
+in mTLS communication. The file should be in PEM format. If not set, this will
+be read from
+L<"OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY>,
+or
+L<"OTEL_EXPORTER_OTLP_CLIENT_KEY"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_CLIENT_KEY>
+if that variable is not set.
+
+If none of those values are set, this will remain undefined.
 
 =item compression
 
@@ -52,6 +93,51 @@ otherwise none will be used.
 If the value is set to a value other than the ones laid out above,
 construction will throw an L<OpenTelemetry::X::Unsupported> exception.
 
+=item endpoint
+
+Specifies the target URL to which exported data will be sent. If set, it
+must be set to a valid URL with scheme and host. It may include a port,
+and should contain a path, but must not contain any additional parts.
+
+Although
+L<the OTLP exporter specification|https://opentelemetry.io/docs/specs/otel/protocol/exporter>
+specifies that endpoints should be signal-specific, this currently only
+applies to traces, since this exporter currently only supports exporting
+tracing data.
+
+If not set, a default value will be read from
+L<"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_ENDPOINT>.
+If this is set, it will be used as-is.
+
+If that value was not set, the "/v1/traces" path will be added to a base URL
+read from
+L<"OTEL_EXPORTER_OTLP_ENDPOINT"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_ENDPOINT>.
+If this environment variable was not set, this base URL will default to
+"http://localhost:4318".
+
+=item headers
+
+A set of key/value pairs to send as headers for the HTTP request. This value
+can be set to either a hash reference with the desired key value pairs, or
+to a string in a format matching the
+L<W3C Correlation-Context|https://github.com/w3c/baggage/blob/master/baggage/HTTP_HEADER_FORMAT.md>,
+except that additional semi-colon delimited metadata is not allowed, as
+described in the
+L<OTLP exporter specification|https://opentelemetry.io/docs/specs/otel/protocol/exporter/#specifying-headers-via-environment-variables>.
+
+This would be a valid example: C<key1=value1,key2=value2>.
+
+When parsing this string, both keys and values will be independently
+URL-decoded and leading and trailing whitespace will be trimmed.
+
+If this parameter is not set, it will be read from the
+L<"OTEL_EXPORTER_OTLP_TRACES_HEADERS"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_HEADERS>
+environment variable, or
+L<"OTEL_EXPORTER_OTLP_HEADERS"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_HEADERS>
+if the first one is not set.
+
+If none of these is set, it will default to an empty hash.
+
 =item protocol
 
 OTLP supports multiple protocols. This exporter currently supports only
@@ -71,6 +157,21 @@ L<JSON::MaybeXS>.
 
 If the value is set to a value other than the ones laid out above,
 construction will throw an L<OpenTelemetry::X::Unsupported> exception.
+
+=item timeout
+
+The maximum number of seconds to wait before disconnecting. Note that
+although the specification suggests this should apply to the entire
+request, this currently applies to each individual open, read, or
+write operation on the socket.
+
+If not set, this value will be read from
+L<"OTEL_EXPORTER_OTLP_TRACES_TIMEOUT"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TRACES_TIMEOUT>,
+or from
+L<"OTEL_EXPORTER_OTLP_TIMEOUT"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_TIMEOUT>
+if that variable is not set.
+
+If none of these values is set, this will default to 10.
 
 =back
 
