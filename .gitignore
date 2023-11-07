@@ -1,5 +1,6 @@
 .build/
 *.swp
+*.proto
 
 # Build artifacts
 Makefile

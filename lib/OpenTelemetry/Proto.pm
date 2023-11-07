@@ -5,11 +5,17 @@ our $VERSION = '0.010';
 
 use experimental 'signatures';
 
-use File::Share 'dist_file';
+use File::Share 'dist_dir';
 use Path::Tiny 'path';
 use Google::ProtocolBuffers::Dynamic;
+use Feature::Compat::Try;
 
 my $g = Google::ProtocolBuffers::Dynamic->new('proto');
+
+my $share = do {
+    try { dist_dir 'OpenTelemetry-Exporter-OTLP' }
+    catch($e) { 'share' }
+};
 
 # Generated with
 #
@@ -27,14 +33,7 @@ for my $proto (qw(
     opentelemetry/proto/collector/metrics/v1/metrics_service.pb
     opentelemetry/proto/collector/trace/v1/trace_service.pb
 )) {
-    my $path = dist_file(
-        'OpenTelemetry-Exporter-OTLP',
-        $proto,
-    );
-
-    # my $path = "share/$proto";
-
-    $g->load_serialized_string( path($path)->slurp );
+    $g->load_serialized_string( path("$share/$proto")->slurp );
 
     my @parts = split '/', $proto;
     pop @parts;
@@ -44,5 +43,20 @@ for my $proto (qw(
         prefix  => join( '::', map ucfirst, @parts ) =~ s/^Opente/OpenTe/r,
     });
 }
+
+# FIXME: This should probably be in a different distribution
+#
+# Generated with
+#
+#    cd share/google/rpc
+#    wget https://raw.githubusercontent.com/googleapis/googleapis/6a8c7914d1b79bd832b5157a09a9332e8cbd16d4/google/rpc/status.proto
+#    protoc -o status.pb status.proto
+#    rm status.proto
+#
+$g->load_serialized_string( path("$share/google/rpc/status.pb")->slurp );
+$g->map({
+    package => 'google.rpc',
+    prefix  => 'OTel::Google::RPC',
+});
 
 1;

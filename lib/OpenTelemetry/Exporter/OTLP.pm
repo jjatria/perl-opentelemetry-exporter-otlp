@@ -21,10 +21,12 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Time::HiRes 'sleep';
     use URL::Encode 'url_decode';
 
-    my $PROTOCOL = eval {
+    my $CAN_USE_PROTOBUF = eval {
         require Google::ProtocolBuffers::Dynamic;
-        'http/protobuf';
-    } // 'http/json';
+        1;
+    };
+
+    my $PROTOCOL = $CAN_USE_PROTOBUF ? 'http/protobuf' : 'http/json';
 
     my $COMPRESSION = eval {
         require Compress::Zlib;
@@ -252,25 +254,41 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
 
                     redo if $self->$maybe_backoff( ++$retries, $reason );
                 }
-                case( m/^(?: 429 | 503 )$/x ) {
-                    redo if $self->$maybe_backoff(
-                        ++$retries,
-                        $res->{status},
-                        $res->{headers}{'retry-after'},
-                    );
-                }
-                case( m/^(?: 408 | 502 | 504 )$/x ) {
-                    redo if $self->$maybe_backoff( ++$retries, $res->{status} );
-                }
                 case( m/^(?: 4 | 5 ) \d{2} $/ax ) {
                     $metrics->inc_counter(
                         'otel.otlp_exporter.failure',
                         { reason => $res->{status} },
                     );
-                    # TODO: Log response
-                }
-                case( m/^ 3 \d{2} /ax ) {
-                    # TODO: Handle redirection
+
+                    if ( $CAN_USE_PROTOBUF ) {
+                        require OpenTelemetry::Proto;
+                        try {
+                            my $status = OTel::Google::RPC::Status
+                                ->decode($res->{content});
+                            OpenTelemetry->handle_error(
+                                exception => 'OTLP exporter received an RPC error status',
+                                message   => $status->encode_json,
+                            );
+                        }
+                        catch($e) {
+                            OpenTelemetry->handle_error(
+                                exception => $e,
+                                message   => 'Unexpected error decoding RPC status in OTLP exporter',
+                            );
+                        }
+                    }
+
+                    my $after = $res->{status} =~ /^(?: 429 | 503 )$/x
+                        ? $res->{headers}{'retry-after'}
+                        : undef;
+
+                    # As-per https://opentelemetry.io/docs/specs/otlp/#failures-1
+                    redo if $res->{status} =~ /^(?: 429 | 502 | 503 | 504 )$/x
+                        && $self->$maybe_backoff(
+                            ++$retries,
+                            $res->{status},
+                            $after,
+                        );
                 }
             }
 
