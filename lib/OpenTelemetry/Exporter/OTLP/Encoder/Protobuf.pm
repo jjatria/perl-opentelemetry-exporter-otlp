@@ -3,7 +3,7 @@ use Object::Pad ':experimental(init_expr)';
 
 package OpenTelemetry::Exporter::OTLP::Encoder::Protobuf;
 
-our $VERSION = '0.010';
+our $VERSION = '0.011';
 
 class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
     :isa(OpenTelemetry::Exporter::OTLP::Encoder::JSON) {

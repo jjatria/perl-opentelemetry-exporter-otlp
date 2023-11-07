@@ -3,7 +3,7 @@ use Object::Pad ':experimental(init_expr)';
 
 package OpenTelemetry::Exporter::OTLP;
 
-our $VERSION = '0.010';
+our $VERSION = '0.011';
 
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
