@@ -19,7 +19,7 @@ blob complying with the 1.0.0 version of
 L<the OTLP specification|https://github.com/open-telemetry/opentelemetry-proto/tree/v1.0.0>.
 
 This encoder uses L<OpenTelemetry::Proto> to encode data, which means it will
-require the availability of L<Google::ProtocolBuffer::Dynamic> to work. Please
+require the availability of L<Google::ProtocolBuffers::Dynamic> to work. Please
 refer to the documentation of those modules for more details.
 
 This class is unlikely to be of use outside the OTLP exporter.

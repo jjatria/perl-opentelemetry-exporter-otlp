@@ -146,7 +146,7 @@ meanings.
 
 =over
 
-=item L<Google::ProtocolBuffer::Dynamic>
+=item L<Google::ProtocolBuffers::Dynamic>
 
 =item L<OpenTelemetry::Exporter::OTLP>
 

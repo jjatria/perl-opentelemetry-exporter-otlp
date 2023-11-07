@@ -64,7 +64,7 @@ L<"OTEL_EXPORTER_OTLP_PROTOCOL"|OpenTelemetry::SDK/OTEL_EXPORTER_OTLP_PROTOCOL>
 environment variable.
 
 If a value is not set in the environment value, the default value will
-depend on availability. If L<Google::ProtocolBuffer::Dynamic> is installed,
+depend on availability. If L<Google::ProtocolBuffers::Dynamic> is installed,
 the protocol will default to "http/protobuf". Otherwise the exporter will
 fall back to "http/json", using whatever encoding back-end is provided by
 L<JSON::MaybeXS>.
@@ -161,7 +161,7 @@ Set to the HTTP status code of the response.
 
 =item L<Compress::Zlib>
 
-=item L<Google::ProtocolBuffer::Dynamic>
+=item L<Google::ProtocolBuffers::Dynamic>
 
 =item L<JSON::MaybeXS>
 
