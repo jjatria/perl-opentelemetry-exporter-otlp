@@ -33,12 +33,16 @@ unlikely to need distribution directly.
 
 ## How do I get started?
 
-This reporisoty has some external dependencies. In particular, it requires on
-the [API] and [SDK] distributions, but it also requires `cmake`, a C++
-compiler, and the development headers for the `protobuf` and `protoc`
-libraries. Check the documentation of your system for how to install these
-system dependencies. Here are some examples for some common Linux
-distributions:
+This repository has some optional external dependencies. In particular, it
+requires the [API] distribution to work. But more importantly, in order to
+export telemetry data using the `http/protobuf` protocol, it requires
+`cmake`, a C++ compiler, and the development headers for the `protobuf`
+and `protoc` libraries. Note that even if these are not available, this
+exporter will continue to work, but it will only be able to export data
+using the `http/json` protocol.
+
+Check the documentation of your system for how to install these system
+dependencies. Here are some examples for some common Linux distributions:
 
 ```
 # Debian / Ubuntu
@@ -48,12 +52,20 @@ apt install g++ cmake libprotobuf-dev libprotoc-dev
 pacman -S gcc protobuf
 ```
 
-You can then install this distribution from the repository (the aim is for it
-to be on CPAN at some point):
-
+You can then install this distribution from CPAN:
 ```
+cpanm OpenTelemetry::Exporter::OTLP
+```
+or directly from the repository if you want to install a development
+version (although note that only the CPAN version is recommended for
+production environments):
+```
+# On a local fork
 cd path/to/this/repo
 cpanm install .
+
+# Over the net
+cpanm https://github.com/jjatria/perl-opentelemetry-exporter-otlp.git
 ```
 
 Then, if the SDK is configured to use this exporter, the telemetry data it
@@ -66,12 +78,9 @@ load it and configure it.
 
 ## How can I get involved?
 
-For now, this distribution exists on Github only, together with some related
-distributions like the [API] and [SDK] distributions.
-
 We are in the process of setting up an OpenTelemetry-Perl special interest
 group (SIG). Until that is set up, you are free to [express your
-interest][sig] or join us in IRC.
+interest][sig] or join us in IRC on the #io-async channel in irc.perl.org.
 
 ## License
 
