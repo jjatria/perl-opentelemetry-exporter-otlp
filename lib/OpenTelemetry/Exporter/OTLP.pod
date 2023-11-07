@@ -147,7 +147,7 @@ complete. It is set with the following attributes:
 
 =over
 
-=item C<status>
+=item status
 
 Set to the HTTP status code of the response.
 
