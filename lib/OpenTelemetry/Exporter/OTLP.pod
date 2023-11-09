@@ -6,7 +6,17 @@ OpenTelemetry::Exporter::OTLP - An OpenTelemetry Protocol span exporter
 
 =head1 SYNOPSIS
 
-    ...
+    use OpenTelemetry;
+    use OpenTelemetry::Exporter::OTLP;
+    use OpenTelemetry::SDK::Trace::Span::Processor::Batch;
+
+    # Use it with a span processor
+    my $processor = OpenTelemetry::SDK::Trace::Span::Processor::Batch->new(
+        exporter => OpenTelemetry::Exporter::OTLP->new( ... ),
+    );
+
+    # Register it with the OpenTelemetry tracer provider
+    OpenTelemetry->tracer_provider->add_span_processor($processor);
 
 =head1 DESCRIPTION
 
