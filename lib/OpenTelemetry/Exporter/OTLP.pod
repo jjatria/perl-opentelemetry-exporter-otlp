@@ -20,11 +20,11 @@ OpenTelemetry::Exporter::OTLP - An OpenTelemetry Protocol span exporter
 
 =head1 DESCRIPTION
 
-This module provides a subclass of L<OpenTelemetry::Exporter> which will
-export telemetry data using the OpenTelemetry Protocol (OTLP). It is the
-default exporter used by L<OpenTelemetry::SDK>, and can be used to export
-data either using plain JSON strings, or binary protocol buffer blobs. See
-below for details.
+This module provides an exporter that implements the
+L<OpenTelemetry::Exporter> role to export telemetry data using the
+OpenTelemetry Protocol (OTLP). It is the default exporter used by
+L<OpenTelemetry::SDK>, and can be used to export data either using plain
+JSON strings, or binary protocol buffer blobs. See below for details.
 
 =head1 METHODS
 
