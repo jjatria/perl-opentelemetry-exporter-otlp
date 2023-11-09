@@ -1,5 +1,7 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
+{{$NEXT}}
+
 0.011     2023-11-09 23:45:26+00:00 Europe/London
 
     * Minor documentation fixes
