@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.020000;
+use 5.032000;
 
 use ExtUtils::MakeMaker;
 
@@ -21,7 +21,7 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "OpenTelemetry-Exporter-OTLP",
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.020000",
+  "MIN_PERL_VERSION" => "5.032000",
   "NAME" => "OpenTelemetry::Exporter::OTLP",
   "PREREQ_PM" => {
     "Feature::Compat::Try" => 0,
