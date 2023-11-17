@@ -44,15 +44,16 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     field $max_retries = 5;
 
     ADJUSTPARAMS ($params) {
-        $endpoint = delete $params->{endpoint}
-            // config('EXPORTER_OTLP_TRACES_ENDPOINT');
+        $endpoint
+            = delete $params->{traces_endpoint}
+            // config('EXPORTER_OTLP_TRACES_ENDPOINT')
+            // do {
+                my $base = delete $params->{endpoint}
+                    // config('EXPORTER_OTLP_ENDPOINT')
+                    // 'http://localhost:4318';
 
-        $endpoint //= do {
-            my $base = config('EXPORTER_OTLP_ENDPOINT');
-            $base
-                ? ( ( $base =~ s|/+$||r ) . '/v1/traces' )
-                : 'http://localhost:4318/v1/traces';
-        };
+                ( $base =~ s|/+$||r ) . '/v1/traces';
+            };
 
         $compression
             //= config(qw( EXPORTER_OTLP_TRACES_COMPRESSION EXPORTER_OTLP_COMPRESSION ))
