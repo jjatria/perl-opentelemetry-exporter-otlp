@@ -28,7 +28,7 @@
          "requires" : {
             "ExtUtils::MakeMaker" : "0",
             "File::ShareDir::Install" : "0.06",
-            "perl" : "v5.20.0"
+            "perl" : "v5.32.0"
          }
       },
       "develop" : {
@@ -58,7 +58,7 @@
             "Syntax::Keyword::Dynamically" : "0",
             "Syntax::Keyword::Match" : "0",
             "Time::Piece" : "0",
-            "perl" : "v5.20.0"
+            "perl" : "v5.32.0"
          }
       },
       "test" : {
@@ -70,7 +70,7 @@
             "File::Spec" : "0",
             "Test2::V0" : "0",
             "Test::More" : "0",
-            "perl" : "v5.20.0"
+            "perl" : "v5.32.0"
          }
       }
    },
@@ -87,6 +87,14 @@
          "file" : "lib/OpenTelemetry/Exporter/OTLP/Encoder/Protobuf.pm",
          "version" : "0.016"
       },
+      "OpenTelemetry::Exporter::OTLP::Logs" : {
+         "file" : "lib/OpenTelemetry/Exporter/OTLP/Logs.pm",
+         "version" : "0.015"
+      },
+      "OpenTelemetry::Exporter::OTLP::Traces" : {
+         "file" : "lib/OpenTelemetry/Exporter/OTLP/Traces.pm",
+         "version" : "0.015"
+      },
       "OpenTelemetry::Proto" : {
          "file" : "lib/OpenTelemetry/Proto.pm",
          "version" : "0.016"
@@ -99,7 +107,7 @@
       },
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp",
+         "url" : "git://github.com/jjatria/perl-opentelemetry-exporter-otlp.git",
          "web" : "https://github.com/jjatria/perl-opentelemetry-exporter-otlp"
       }
    },
