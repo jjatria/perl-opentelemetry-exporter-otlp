@@ -4,7 +4,7 @@ requires 'HTTP::Tiny';
 requires 'JSON::MaybeXS';
 requires 'Metrics::Any';
 requires 'Object::Pad';
-requires 'OpenTelemetry';
+requires 'OpenTelemetry', '0.010';
 requires 'Path::Tiny';
 requires 'Syntax::Keyword::Dynamically';
 requires 'Syntax::Keyword::Match';
