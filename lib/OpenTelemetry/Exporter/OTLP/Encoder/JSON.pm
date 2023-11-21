@@ -53,7 +53,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
             attributes             => $self->encode_attributes($event->attributes),
             droppedAttributesCount => $event->dropped_attributes,
             name                   => $event->name,
-            timeUnixNano           => $event->timestamp * 1_000_000_000,
+            timeUnixNano           => int($event->timestamp * 1_000_000_000),
         };
     }
 
@@ -61,8 +61,8 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
         {
             attributes             => $self->encode_attributes($link->attributes),
             droppedAttributesCount => $link->dropped_attributes,
-            spanId                 => $self->encode_id( $link->context->span_id ),
-            traceId                => $self->encode_id( $link->context->trace_id ),
+            spanId                 => $link->context->hex_span_id,
+            traceId                => $link->context->hex_trace_id,
         };
     }
 
@@ -79,21 +79,21 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
             droppedAttributesCount => $span->dropped_attributes,
             droppedEventsCount     => $span->dropped_events,
             droppedLinksCount      => $span->dropped_links,
-            endTimeUnixNano        => $span->end_timestamp   * 1_000_000_000,
-            events                 => [ map $self->encode_event($_), $span->events ],
+            endTimeUnixNano        => int($span->end_timestamp * 1_000_000_000),
+            events                 => [map $self->encode_event($_), $span->events],
             kind                   => $span->kind,
             links                  => [ map $self->encode_link($_),  $span->links  ],
             name                   => $span->name,
-            spanId                 => $self->encode_id( $span->span_id ),
-            startTimeUnixNano      => $span->start_timestamp * 1_000_000_000,
+            spanId                 => $span->hex_span_id,
+            startTimeUnixNano      => int($span->start_timestamp * 1_000_000_000),
             status                 => $self->encode_status($span->status),
-            traceId                => $self->encode_id( $span->trace_id ),
+            traceId                => $span->hex_trace_id,
             traceState             => $span->trace_state->to_string,
         };
 
-        my $parent = $span->parent_span_id;
-        $data->{parent_span_id} = $self->encode_id($parent)
-            unless $parent eq INVALID_SPAN_ID;
+        my $parent = $span->hex_parent_span_id;
+        $data->{parent_span_id} = $span->hex_parent_span_id
+          unless $parent eq INVALID_SPAN_ID;
 
         $data;
     }
