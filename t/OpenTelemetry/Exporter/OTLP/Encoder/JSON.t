@@ -6,7 +6,7 @@ use experimental 'signatures';
 
 use JSON::MaybeXS;
 use OpenTelemetry::Constants
-    'INVALID_SPAN_ID',
+    'HEX_INVALID_SPAN_ID',
     -trace_export,
     -span_kind,
     -span_status;
@@ -45,18 +45,18 @@ my $span_mock = mock 'Local::Span' => add => [
     dropped_links         => 0,
     end_timestamp         => 100,
     events                => sub { },
+    hex_parent_span_id    => sub { HEX_INVALID_SPAN_ID },
+    hex_span_id           => sub { shift->{context}->hex_span_id },
+    hex_trace_id          => sub { shift->{context}->hex_trace_id },
+    instrumentation_scope => sub { shift->{scope} //= Local::Scope->new },
     kind                  => sub { SPAN_KIND_INTERNAL },
     links                 => sub { },
     name                  => sub { shift->{name} //= 'X' },
-    parent_span_id        => sub { INVALID_SPAN_ID },
-    span_id               => sub { shift->{context}->span_id     },
+    resource              => sub { shift->{resource} //= Local::Resource->new },
     start_timestamp       => 0,
     status                => sub { OpenTelemetry::Trace::Span::Status->ok },
     trace_flags           => sub { shift->{context}->trace_flags },
-    trace_id              => sub { shift->{context}->trace_id    },
     trace_state           => sub { shift->{context}->trace_state },
-    instrumentation_scope => sub { shift->{scope} //= Local::Scope->new },
-    resource              => sub { shift->{resource} //= Local::Resource->new },
 ];
 
 is decode_json(CLASS->new->encode([

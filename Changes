@@ -6,6 +6,8 @@ Revision history for OpenTelemetry-Exporter-OTLP
       support for field initialisers
     * Make all shutdown and force_flush methods async.
       This adds a new dependency on Future::AsyncAwait
+    * Fix issues with JSON encoding of timestamps,
+      span and trace IDs, and string values
 
 0.013     2023-11-21 23:19:28+00:00 Europe/London
 

@@ -7,18 +7,13 @@ our $VERSION = '0.014';
 
 class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     use JSON::MaybeXS;
-    use MIME::Base64;
-    use OpenTelemetry::Constants 'INVALID_SPAN_ID';
+    use OpenTelemetry::Constants 'HEX_INVALID_SPAN_ID';
     use Ref::Util qw( is_hashref is_arrayref );
     use Scalar::Util 'refaddr';
 
     method content_type () { 'application/json' }
 
     method serialise ($data) { encode_json $data }
-
-    method encode_id ( $id ) {
-        MIME::Base64::encode_base64( $id, '' )
-    }
 
     method encode_arraylist ($v) {
         [ map $self->encode_anyvalue($_), @$v ]
@@ -48,7 +43,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
         }
 
         # TODO: not strings
-        return { stringValue => $v };
+        return { stringValue => "$v" };
     }
 
     method encode_resource ( $resource ) {
@@ -63,7 +58,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
             attributes             => $self->encode_kvlist($event->attributes),
             droppedAttributesCount => $event->dropped_attributes,
             name                   => $event->name,
-            timeUnixNano           => $event->timestamp * 1_000_000_000,
+            timeUnixNano           => int $event->timestamp * 1_000_000_000,
         };
     }
 
@@ -71,8 +66,8 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
         {
             attributes             => $self->encode_kvlist($link->attributes),
             droppedAttributesCount => $link->dropped_attributes,
-            spanId                 => $self->encode_id( $link->context->span_id ),
-            traceId                => $self->encode_id( $link->context->trace_id ),
+            spanId                 => $link->context->hex_span_id,
+            traceId                => $link->context->hex_trace_id,
         };
     }
 
@@ -89,21 +84,21 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
             droppedAttributesCount => $span->dropped_attributes,
             droppedEventsCount     => $span->dropped_events,
             droppedLinksCount      => $span->dropped_links,
-            endTimeUnixNano        => $span->end_timestamp   * 1_000_000_000,
+            endTimeUnixNano        => int $span->end_timestamp * 1_000_000_000,
             events                 => [ map $self->encode_event($_), $span->events ],
             kind                   => $span->kind,
             links                  => [ map $self->encode_link($_),  $span->links  ],
             name                   => $span->name,
-            spanId                 => $self->encode_id( $span->span_id ),
-            startTimeUnixNano      => $span->start_timestamp * 1_000_000_000,
+            spanId                 => $span->hex_span_id,
+            startTimeUnixNano      => int $span->start_timestamp * 1_000_000_000,
             status                 => $self->encode_status($span->status),
-            traceId                => $self->encode_id( $span->trace_id ),
+            traceId                => $span->hex_trace_id,
             traceState             => $span->trace_state->to_string,
         };
 
-        my $parent = $span->parent_span_id;
-        $data->{parent_span_id} = $self->encode_id($parent)
-            unless $parent eq INVALID_SPAN_ID;
+        my $parent = $span->hex_parent_span_id;
+        $data->{parent_span_id} = $parent
+            unless $parent eq HEX_INVALID_SPAN_ID;
 
         $data;
     }

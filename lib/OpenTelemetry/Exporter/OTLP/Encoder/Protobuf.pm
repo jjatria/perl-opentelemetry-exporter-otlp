@@ -48,7 +48,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
             attributes               => $self->encode_kvlist($event->attributes),
             dropped_attributes_count => $event->dropped_attributes,
             name                     => $event->name,
-            time_unix_nano           => $event->timestamp * 1_000_000_000,
+            time_unix_nano           => int $event->timestamp * 1_000_000_000,
         };
     }
 
@@ -67,13 +67,13 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
             dropped_attributes_count => $span->dropped_attributes,
             dropped_events_count     => $span->dropped_events,
             dropped_links_count      => $span->dropped_links,
-            end_time_unix_nano       => $span->end_timestamp   * 1_000_000_000,
+            end_time_unix_nano       => int $span->end_timestamp * 1_000_000_000,
             events                   => [ map $self->encode_event($_), $span->events ],
             kind                     => $span->kind,
             links                    => [ map $self->encode_link($_),  $span->links  ],
             name                     => $span->name,
             span_id                  => $span->span_id,
-            start_time_unix_nano     => $span->start_timestamp * 1_000_000_000,
+            start_time_unix_nano     => int $span->start_timestamp * 1_000_000_000,
             status                   => $self->encode_status($span->status),
             trace_id                 => $span->trace_id,
             trace_state              => $span->trace_state->to_string,
