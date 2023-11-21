@@ -9,7 +9,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     use JSON::MaybeXS;
     use MIME::Base64;
     use OpenTelemetry::Constants 'INVALID_SPAN_ID';
-    use Ref::Util 'is_arrayref';
+    use Ref::Util qw( is_hashref is_arrayref );
     use Scalar::Util 'refaddr';
 
     method content_type () { 'application/json' }
@@ -20,37 +20,47 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
         MIME::Base64::encode_base64( $id, '' )
     }
 
-    method encode_single_value ( $v ) {
-        { stringValue => $v }
+    method encode_arraylist ($v) {
+        [ map $self->encode_anyvalue($_), @$v ]
     }
 
-    method encode_value ( $v ) {
-        is_arrayref $v
-            ? { arrayValue => { values => [ map $self->encode_single_value($_), @$v ] } }
-            : $self->encode_single_value($v)
-    }
-
-    method encode_attributes ( $hash ) {
+    method encode_kvlist ($v) {
         [
             map {
                 {
                     key   => $_,
-                    value => $self->encode_value($hash->{$_}),
-                };
-            } keys %$hash,
-        ];
+                    value => $self->encode_anyvalue( $v->{$_} )
+                }
+            } keys %$v
+        ]
+    }
+
+    method encode_anyvalue ( $v ) {
+        return { kvlistValue => { values => $self->encode_kvlist($v) } }
+            if is_hashref $v;
+
+        return { arrayValue  => { values => $self->encode_arraylist($v) } }
+            if is_arrayref $v;
+
+        if ( my $ref = ref $v ) {
+            warn "Unsupported ref while encoding: $ref";
+            return;
+        }
+
+        # TODO: not strings
+        return { stringValue => $v };
     }
 
     method encode_resource ( $resource ) {
         {
-            attributes             => $self->encode_attributes( $resource->attributes ),
+            attributes             => $self->encode_kvlist($resource->attributes),
             droppedAttributesCount => $resource->dropped_attributes,
         };
     }
 
     method encode_event ( $event ) {
         {
-            attributes             => $self->encode_attributes($event->attributes),
+            attributes             => $self->encode_kvlist($event->attributes),
             droppedAttributesCount => $event->dropped_attributes,
             name                   => $event->name,
             timeUnixNano           => $event->timestamp * 1_000_000_000,
@@ -59,7 +69,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
 
     method encode_link ( $link ) {
         {
-            attributes             => $self->encode_attributes($link->attributes),
+            attributes             => $self->encode_kvlist($link->attributes),
             droppedAttributesCount => $link->dropped_attributes,
             spanId                 => $self->encode_id( $link->context->span_id ),
             traceId                => $self->encode_id( $link->context->trace_id ),
@@ -75,7 +85,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
 
     method encode_span ( $span ) {
         my $data = {
-            attributes             => $self->encode_attributes($span->attributes),
+            attributes             => $self->encode_kvlist($span->attributes),
             droppedAttributesCount => $span->dropped_attributes,
             droppedEventsCount     => $span->dropped_events,
             droppedLinksCount      => $span->dropped_links,
@@ -100,7 +110,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
 
     method encode_scope ( $scope ) {
         {
-            attributes             => $self->encode_attributes( $scope->attributes ),
+            attributes             => $self->encode_kvlist($scope->attributes),
             droppedAttributesCount => $scope->dropped_attributes,
             name                   => $scope->name,
             version                => $scope->version,

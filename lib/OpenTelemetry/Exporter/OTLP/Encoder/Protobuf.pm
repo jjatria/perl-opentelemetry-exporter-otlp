@@ -10,7 +10,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
 
     use OpenTelemetry::Constants 'INVALID_SPAN_ID';
     use OpenTelemetry::Proto;
-    use Ref::Util 'is_arrayref';
+    use Ref::Util qw( is_hashref is_arrayref );
     use Scalar::Util 'refaddr';
 
     method content_type () { 'application/x-protobuf' }
@@ -20,26 +20,32 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
             ->new_and_check({ resource_spans => $data->{resourceSpans} })->encode;
     }
 
-    method encode_single_value ( $v ) {
-        { string_value => $v }
-    }
+    method encode_anyvalue ( $v ) {
+        return { kvlist_value => { values => $self->encode_kvlist($v) } }
+            if is_hashref $v;
 
-    method encode_value ( $v ) {
-        is_arrayref $v
-            ? { array_value => { values => [ map $self->encode_single_value($_), @$v ] } }
-            : $self->encode_single_value($v)
+        return { array_value  => { values => $self->encode_arraylist($v) } }
+            if is_arrayref $v;
+
+        if ( my $ref = ref $v ) {
+            warn "Unsupported ref while encoding: $ref";
+            return;
+        }
+
+        # TODO: not strings
+        return { string_value => $v };
     }
 
     method encode_resource ( $resource ) {
         {
-            attributes               => $self->encode_attributes( $resource->attributes ),
+            attributes               => $self->encode_kvlist($resource->attributes),
             dropped_attributes_count => $resource->dropped_attributes,
         };
     }
 
     method encode_event ( $event ) {
         {
-            attributes               => $self->encode_attributes($event->attributes),
+            attributes               => $self->encode_kvlist($event->attributes),
             dropped_attributes_count => $event->dropped_attributes,
             name                     => $event->name,
             time_unix_nano           => $event->timestamp * 1_000_000_000,
@@ -48,7 +54,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
 
     method encode_link ( $link ) {
         {
-            attributes               => $self->encode_attributes($link->attributes),
+            attributes               => $self->encode_kvlist($link->attributes),
             dropped_attributes_count => $link->dropped_attributes,
             span_id                  => $link->context->span_id,
             trace_id                 => $link->context->trace_id,
@@ -57,7 +63,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
 
     method encode_span ( $span ) {
         my $data = {
-            attributes               => $self->encode_attributes($span->attributes),
+            attributes               => $self->encode_kvlist($span->attributes),
             dropped_attributes_count => $span->dropped_attributes,
             dropped_events_count     => $span->dropped_events,
             dropped_links_count      => $span->dropped_links,
@@ -82,7 +88,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::Protobuf
 
     method encode_scope ( $scope ) {
         {
-            attributes               => $self->encode_attributes( $scope->attributes ),
+            attributes               => $self->encode_kvlist($scope->attributes),
             dropped_attributes_count => $scope->dropped_attributes,
             name                     => $scope->name,
             version                  => $scope->version,

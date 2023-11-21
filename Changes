@@ -4,6 +4,9 @@ Revision history for OpenTelemetry-Exporter-OTLP
 
     * Bump OpenTelemetry dependency to 0.010, for
       a the working implementation of the API
+    * Allow OTLP encoders to encode arbitrary data
+      structures, in preparation for the eventual
+      support of logs and metrics
 
 0.012     2023-11-17 00:07:07+00:00 Europe/London
 
