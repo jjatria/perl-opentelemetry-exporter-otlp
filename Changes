@@ -1,5 +1,7 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
+{{$NEXT}}
+
 0.013     2023-11-21 23:19:28+00:00 Europe/London
 
     * Bump OpenTelemetry dependency to 0.010, for
