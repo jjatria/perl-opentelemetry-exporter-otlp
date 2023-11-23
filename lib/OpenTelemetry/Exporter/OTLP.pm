@@ -7,6 +7,7 @@ our $VERSION = '0.014';
 
 class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
+    use Future::AsyncAwait;
     use HTTP::Tiny;
     use Module::Runtime 'require_module';
     use OpenTelemetry::Common qw( config maybe_timeout timeout_timestamp );
@@ -307,12 +308,12 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         $self->$send_request( $request, $timeout );
     }
 
-    method shutdown ( $timeout = undef ) {
+    async method shutdown ( $timeout = undef ) {
         $stopped = 1;
         TRACE_EXPORT_SUCCESS;
     }
 
-    method force_flush ( $timeout = undef ) {
+    async method force_flush ( $timeout = undef ) {
         TRACE_EXPORT_SUCCESS;
     }
 }

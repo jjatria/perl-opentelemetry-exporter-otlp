@@ -1,4 +1,5 @@
 requires 'Feature::Compat::Try';
+requires 'Future::AsyncAwait', '0.38'; # Object::Pad compatibility
 requires 'File::Share';
 requires 'HTTP::Tiny';
 requires 'JSON::MaybeXS';

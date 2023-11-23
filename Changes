@@ -4,6 +4,8 @@ Revision history for OpenTelemetry-Exporter-OTLP
 
     * Bump Object::Pad dependency to 0.74 to ensure
       support for field initialisers
+    * Make all shutdown and force_flush methods async.
+      This adds a new dependency on Future::AsyncAwait
 
 0.013     2023-11-21 23:19:28+00:00 Europe/London
 

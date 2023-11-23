@@ -48,6 +48,7 @@
          "requires" : {
             "Feature::Compat::Try" : "0",
             "File::Share" : "0",
+            "Future::AsyncAwait" : "0.38",
             "HTTP::Tiny" : "0",
             "JSON::MaybeXS" : "0",
             "Metrics::Any" : "0",
