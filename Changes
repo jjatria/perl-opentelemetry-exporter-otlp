@@ -2,6 +2,9 @@ Revision history for OpenTelemetry-Exporter-OTLP
 
 {{$NEXT}}
 
+    * Bump Object::Pad dependency to 0.74 to ensure
+      support for field initialisers
+
 0.013     2023-11-21 23:19:28+00:00 Europe/London
 
     * Bump OpenTelemetry dependency to 0.010, for
