@@ -1,5 +1,7 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
+{{$NEXT}}
+
 0.014     2023-11-23 19:32:20+00:00 Europe/London
 
     * Bump Object::Pad dependency to 0.74 to ensure

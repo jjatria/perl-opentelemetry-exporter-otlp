@@ -3,7 +3,7 @@ use Object::Pad ':experimental(init_expr)';
 
 package OpenTelemetry::Exporter::OTLP::Encoder::JSON;
 
-our $VERSION = '0.014';
+our $VERSION = '0.015';
 
 class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     use JSON::MaybeXS;
