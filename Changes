@@ -1,5 +1,7 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
+{{$NEXT}}
+
 0.015     2023-11-26 16:19:58+00:00 Europe/London
 
     * Fix key name of parent span ID in JSON encoding

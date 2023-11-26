@@ -1,7 +1,7 @@
 package OpenTelemetry::Proto;
 # ABSTRACT: foo
 
-our $VERSION = '0.015';
+our $VERSION = '0.016';
 
 use experimental 'signatures';
 
