@@ -34,8 +34,39 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         'gzip';
     } // 'none';
 
-    use Metrics::Any '$metrics', strict => 0;
     my $logger = OpenTelemetry->logger;
+
+    use Metrics::Any '$metrics', strict => 1,
+        name_prefix => [qw( otel exporter otlp )];
+
+    $metrics->make_counter( 'success',
+        name        => [qw( success )],
+        description => 'Number of times the export process succeeded',
+    );
+
+    $metrics->make_counter( 'failure',
+        name        => [qw( failure )],
+        description => 'Number of times the export process failed',
+        labels      => [qw( reason )],
+    );
+
+    $metrics->make_distribution( 'uncompressed',
+        name        => [qw( message uncompressed size )],
+        description => 'Size of exporter payload before compression',
+        units       => 'bytes',
+    );
+
+    $metrics->make_distribution( 'compressed',
+        name        => [qw( message compressed size )],
+        description => 'Size of exporter payload after compression',
+        units       => 'bytes',
+    );
+
+    $metrics->make_timer( 'request',
+        name        => [qw( request duration )],
+        description => 'Duration of the export request',
+        labels      => [qw( status )],
+    );
 
     field $stopped;
     field $ua;
@@ -149,10 +180,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     }
 
     method $maybe_backoff ( $count, $reason, $after = 0 ) {
-        $metrics->inc_counter(
-            'otel.otlp_exporter.failure',
-            { reason => $reason },
-        );
+        $metrics->inc_counter( failure => [ reason => $reason ] );
 
         return if $count > $max_retries;
 
@@ -176,8 +204,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         my %request = ( content => $data );
 
         $metrics->report_distribution(
-            'otel.otlp_exporter.message.uncompressed_size',
-            length $request{content},
+            uncompressed => length $request{content},
         );
 
         if ( $compression eq 'gzip' ) {
@@ -190,16 +217,14 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                 );
 
                 $metrics->inc_counter(
-                    'otel.otlp_exporter.failure',
-                    { reason => 'zlib_error' },
+                    failure => [ reason => 'zlib_error' ],
                 );
 
                 return TRACE_EXPORT_FAILURE;
             }
 
             $metrics->report_distribution(
-                'otel.otlp_exporter.message.compressed_size',
-                length $request{content},
+                compressed => length $request{content},
             );
         }
 
@@ -220,13 +245,15 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             my $res = $ua->post( $endpoint, \%request );
             my $request_end = timeout_timestamp;
 
-            $metrics->set_gauge_to(
-                'otel.otlp_exporter.request_duration',
-                $request_end - $request_start,
-                { status => $res->{status} },
+            $metrics->report_timer(
+                request => $request_end - $request_start,
+                [ status => $res->{status} ],
             );
 
-            return TRACE_EXPORT_SUCCESS if $res->{success};
+            if ( $res->{success} ) {
+                $metrics->inc_counter('success');
+                return TRACE_EXPORT_SUCCESS;
+            }
 
             match ( $res->{status} : =~ ) {
                 case( m/^ 599 $/x ) {
@@ -243,12 +270,13 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                             case(m/^Cannot parse/)             { 'parse_error' }
                             default {
                                 $metrics->inc_counter(
-                                    'otel.otlp_exporter.failure',
-                                    { reason => $res->{status} },
+                                    failure => [ reason => $res->{status} ],
                                 );
+
                                 OpenTelemetry->handle_error(
                                     message => "Unhandled error sending OTLP request: $res->{content}",
                                 );
+
                                 return TRACE_EXPORT_FAILURE;
                             }
                         }
@@ -258,8 +286,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                 }
                 case( m/^(?: 4 | 5 ) \d{2} $/ax ) {
                     $metrics->inc_counter(
-                        'otel.otlp_exporter.failure',
-                        { reason => $res->{status} },
+                        failure => [ reason => $res->{status} ],
                     );
 
                     if ( $CAN_USE_PROTOBUF ) {

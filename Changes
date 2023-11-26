@@ -3,6 +3,16 @@ Revision history for OpenTelemetry-Exporter-OTLP
 {{$NEXT}}
 
     * Fix key name of parent span ID in JSON encoding
+    * Switch Metrics::Any client to strict mode, to allow for automatic
+      metric name generation. This means the metrics can be exported
+      with adapters that don't allow periods (eg. Prometheus). This
+      means some metrics had to be renamed:
+      - otel.otlp_exporter.failure -> otel.exporter.otlp.failure
+      - otel.otlp_exporter.message.compressed_size -> otel.exporter.otlp.message.compressed.size
+      - otel.otlp_exporter.message.uncompressed_size -> otel.exporter.otlp.message.uncompressed.size
+      - otel.otlp_exporter.request_duration -> otel.exporter.otlp.request.duration
+      Also: the `otel.exporter.otlp.success` metric was added for
+      consistency.
 
 0.014     2023-11-23 19:32:20+00:00 Europe/London
 

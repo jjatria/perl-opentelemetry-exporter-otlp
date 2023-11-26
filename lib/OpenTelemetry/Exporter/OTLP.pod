@@ -194,9 +194,10 @@ L<is being discussed|https://github.com/open-telemetry/semantic-conventions/issu
 
 =over
 
-=item C<otel.otlp_exporter.failure>
+=item C<otel.exporter.otlp.failure>
 
-Incremented every time an error is encountered during export.
+Incremented every time an error is encountered during export. This may be a
+recoverable error that disappears after a retry.
 
 Reported with the following attributes:
 
@@ -240,18 +241,22 @@ be set to the non-successful numeric status code received from the server.
 
 =back
 
+=item C<otel.exporter.otlp.success>
+
+Incremented every time an export operation completes successfully.
+
 =back
 
-=item C<otel.otlp_exporter.message.compressed_size>
+=item C<otel.exporter.otlp.message.compressed.size>
 
 Set to the size of the request content after compression is done. This is
 not sent if no compression is done.
 
-=item C<otel.otlp_exporter.message.uncompressed_size>
+=item C<otel.exporter.otlp.message.uncompressed.size>
 
 Set to the size of the request content before compression is done.
 
-=item C<otel.otlp_exporter.request_duration>
+=item C<otel.exporter.otlp.request.duration>
 
 Set to the number of seconds, as a fraction, that the request took to
 complete. It is set with the following attributes:
