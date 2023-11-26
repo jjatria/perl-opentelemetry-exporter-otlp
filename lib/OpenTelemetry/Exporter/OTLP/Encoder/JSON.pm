@@ -97,7 +97,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
         };
 
         my $parent = $span->hex_parent_span_id;
-        $data->{parent_span_id} = $parent
+        $data->{parentSpanId} = $parent
             unless $parent eq HEX_INVALID_SPAN_ID;
 
         $data;
