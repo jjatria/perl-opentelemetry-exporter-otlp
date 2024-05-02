@@ -43,7 +43,7 @@ my %WriteMakefileArgs = (
     "Test2::V0" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.016",
+  "VERSION" => "0.017",
   "test" => {
     "TESTS" => "t/*.t t/OpenTelemetry/*.t t/OpenTelemetry/Exporter/*.t t/OpenTelemetry/Exporter/OTLP/Encoder/*.t"
   }
