@@ -1,6 +1,6 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
-{{$NEXT}}
+0.016     2024-05-02 23:01:09+01:00 Europe/London
 
     * Bump OTLP Protobuf files to v1.2.0
     * Ensure JSON encoder encodes status messages as strings.
