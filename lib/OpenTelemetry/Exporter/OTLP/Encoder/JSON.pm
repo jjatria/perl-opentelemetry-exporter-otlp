@@ -74,7 +74,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     method encode_status ( $status ) {
         {
             code    => $status->code,
-            message => $status->description,
+            message => '' . $status->description,
         };
     }
 
