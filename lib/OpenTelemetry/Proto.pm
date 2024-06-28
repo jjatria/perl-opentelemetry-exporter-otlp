@@ -1,5 +1,5 @@
 package OpenTelemetry::Proto;
-# ABSTRACT: foo
+# ABSTRACT: The protobuf definitions for the OpenTelemetry Protocol
 
 our $VERSION = '0.016001';
 
