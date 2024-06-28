@@ -1,5 +1,7 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
+{{$NEXT}}
+
 0.016001  2024-06-28 22:39:20+01:00 Europe/London (TRIAL RELEASE)
 
     * Add experimental support for logs
