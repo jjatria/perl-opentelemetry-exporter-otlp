@@ -1,7 +1,7 @@
 package OpenTelemetry::Proto;
 # ABSTRACT: The protobuf definitions for the OpenTelemetry Protocol
 
-our $VERSION = '0.016002';
+our $VERSION = '0.017';
 
 use experimental 'signatures';
 
