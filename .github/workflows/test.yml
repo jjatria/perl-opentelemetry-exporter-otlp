@@ -63,12 +63,8 @@ jobs:
           perl -v
           cpanm --showdeps .
 
-      # FIXME: Install the API and SDK from the repository for now,
-      # until it is on CPAN
       - name: Install dependencies
         run: |
-          cpanm -n https://github.com/jjatria/perl-opentelemetry.git
-          cpanm -n https://github.com/jjatria/perl-opentelemetry-sdk.git
           cpanm --installdeps -n .
 
       - if: ${{ matrix.cover }}
