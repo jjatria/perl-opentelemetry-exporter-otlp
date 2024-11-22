@@ -53,19 +53,19 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
 
+      - name: Install dependencies
+        run: |
+          cpanm --installdeps -n .
+
       - if: ${{ !matrix.plain }}
         uses: ConorMacBride/install-package@v1
         with:
           apt: g++ cmake libprotobuf-dev libprotoc-dev
 
-      - name: Show diagnostics
+      - if: ${{ !matrix.plain }}
         run: |
           perl -v
-          cpanm --showdeps .
-
-      - name: Install dependencies
-        run: |
-          cpanm --installdeps -n .
+          cpanm -n Google::ProtocolBuffers::Dynamic Compress::Zlib
 
       - if: ${{ matrix.cover }}
         run: cpanm -n Devel::Cover::Report::Coveralls
