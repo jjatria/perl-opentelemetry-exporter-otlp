@@ -177,7 +177,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         );
     }
 
-    method $maybe_backoff ( $count, $after = 0 ) {
+    method $maybe_backoff ( $count, $after //= 0 ) {
         return if $count > $max_retries;
 
         my $sleep;
