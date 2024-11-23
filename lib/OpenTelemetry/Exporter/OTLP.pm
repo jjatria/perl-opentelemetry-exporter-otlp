@@ -177,9 +177,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         );
     }
 
-    method $maybe_backoff ( $count, $reason, $after = 0 ) {
-        $metrics->inc_counter( failure => [ reason => $reason ] );
-
+    method $maybe_backoff ( $count, $after = 0 ) {
         return if $count > $max_retries;
 
         my $sleep;
@@ -281,7 +279,9 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                         }
                     };
 
-                    redo if $self->$maybe_backoff( ++$retries, $reason );
+                    $metrics->inc_counter( failure => [ reason => $reason ] );
+
+                    redo if $self->$maybe_backoff( ++$retries );
                 }
                 case( m/^(?: 4 | 5 ) \d{2} $/ax ) {
                     my $code = $res->{status};
@@ -317,7 +317,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
                             || $code == 502
                             || $code == 503
                             || $code == 504
-                        ) && $self->$maybe_backoff( ++$retries, $code, $after );
+                        ) && $self->$maybe_backoff( ++$retries, $after );
                 }
             }
 
