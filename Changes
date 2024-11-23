@@ -7,6 +7,9 @@ Revision history for OpenTelemetry-Exporter-OTLP
       'otel_exporter_otlp_failure' counter in some cases.
     * Fixed a bug that would sometimes result in an attempt to sleep
       for a negative number of seconds.
+    * Add a 'retries' contructor parameter to control the maximum
+      number of retries for failed export requests
+    * Document retry behaviour for export method
 
 0.017     2024-07-18 09:30:57+01:00 Europe/London
 
