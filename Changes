@@ -1,6 +1,6 @@
 Revision history for OpenTelemetry-Exporter-OTLP
 
-{{$NEXT}}
+0.018     2024-11-24 01:17:14+00:00 Europe/London
 
     * Add missing change log entry for previous release
     * Fixed an issue that would result in duplicate counts of the
