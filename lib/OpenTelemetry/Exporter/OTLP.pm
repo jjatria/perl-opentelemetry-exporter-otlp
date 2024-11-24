@@ -179,7 +179,9 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         );
     }
 
-    method $maybe_backoff ( $attempts, $after //= 0 ) {
+    method $maybe_backoff ( $attempts, $after = undef ) {
+        $after //= 0; # Breaks tests in Perls under 5.38 if in signature
+
         return if $attempts > $retries;
 
         my $sleep;
