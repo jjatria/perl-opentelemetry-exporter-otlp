@@ -9,17 +9,17 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     use Feature::Compat::Try;
     use Future::AsyncAwait;
     use HTTP::Tiny;
+    use Log::Any;
     use Module::Runtime 'require_module';
     use OpenTelemetry::Common qw( config maybe_timeout timeout_timestamp );
     use OpenTelemetry::Constants -trace_export;
     use OpenTelemetry::Context;
     use OpenTelemetry::Trace;
     use OpenTelemetry::X;
-    use OpenTelemetry;
     use Syntax::Keyword::Dynamically;
     use Syntax::Keyword::Match;
-    use Time::Piece;
     use Time::HiRes 'sleep';
+    use Time::Piece;
     use URL::Encode 'url_decode';
 
     my $CAN_USE_PROTOBUF = eval {
@@ -34,7 +34,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
         'gzip';
     } // 'none';
 
-    my $logger = OpenTelemetry->logger;
+    my $logger = Log::Any->get_logger( category => 'OpenTelemetry' );
 
     use Metrics::Any '$metrics', strict => 1,
         name_prefix => [qw( otel exporter otlp )];
