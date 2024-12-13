@@ -73,7 +73,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
     field $endpoint;
     field $compression;
     field $encoder;
-    field $retries = 5;
+    field $retries;
 
     ADJUSTPARAMS ($params) {
         $endpoint = delete $params->{endpoint}
@@ -89,7 +89,7 @@ class OpenTelemetry::Exporter::OTLP :does(OpenTelemetry::Exporter) {
             // config(<EXPORTER_OTLP_{TRACES_,}COMPRESSION>)
             // $COMPRESSION;
 
-        $retries = delete $params->{retries};
+        $retries = delete $params->{retries} // 5;
 
         my $timeout = delete $params->{timeout}
             // config(<EXPORTER_OTLP_{TRACES_,}TIMEOUT>)
