@@ -11,7 +11,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     use Ref::Util qw( is_hashref is_arrayref );
     use Scalar::Util 'refaddr';
 
-    use experimental 'isa';
+    use isa 'OpenTelemetry::SDK::Logs::LogRecord';
 
     method content_type () { 'application/json' }
 
@@ -186,7 +186,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
 
         my $type;
         for (@$data) {
-            $type //= $_ isa OpenTelemetry::SDK::Logs::LogRecord
+            $type //= isa_OpenTelemetry_SDK_Logs_LogRecord($_)
                 ? 'logs'
                 : 'spans';
 

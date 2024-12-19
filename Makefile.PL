@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.032000;
+use 5.030000;
 
 use ExtUtils::MakeMaker;
 
@@ -21,7 +21,7 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "OpenTelemetry-Exporter-OTLP",
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.032000",
+  "MIN_PERL_VERSION" => "5.030000",
   "NAME" => "OpenTelemetry::Exporter::OTLP",
   "PREREQ_PM" => {
     "Feature::Compat::Try" => 0,
@@ -35,7 +35,8 @@ my %WriteMakefileArgs = (
     "Path::Tiny" => 0,
     "Syntax::Keyword::Dynamically" => 0,
     "Syntax::Keyword::Match" => 0,
-    "Time::Piece" => 0
+    "Time::Piece" => 0,
+    "isa" => 0
   },
   "TEST_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0,
@@ -66,7 +67,8 @@ my %FallbackPrereqs = (
   "Syntax::Keyword::Match" => 0,
   "Test2::V0" => 0,
   "Test::More" => 0,
-  "Time::Piece" => 0
+  "Time::Piece" => 0,
+  "isa" => 0
 );
 
 
