@@ -6,7 +6,7 @@ requires 'HTTP::Tiny';
 requires 'JSON::MaybeXS';
 requires 'Metrics::Any';
 requires 'Object::Pad', '0.74'; # For //= field initialisers
-requires 'OpenTelemetry', '0.010';
+requires 'OpenTelemetry', '0.030'; # For internal_logger
 requires 'Path::Tiny';
 requires 'Syntax::Keyword::Dynamically';
 requires 'Syntax::Keyword::Match';
