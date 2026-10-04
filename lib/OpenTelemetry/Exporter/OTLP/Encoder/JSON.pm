@@ -33,6 +33,8 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
     }
 
     method encode_anyvalue ( $v ) {
+        return {} unless defined $v;
+
         return { kvlistValue => { values => $self->encode_kvlist($v) } }
             if is_hashref $v;
 
@@ -41,7 +43,7 @@ class OpenTelemetry::Exporter::OTLP::Encoder::JSON {
 
         if ( my $ref = ref $v ) {
             warn "Unsupported ref while encoding: $ref";
-            return;
+            return {};
         }
 
         # TODO: not strings

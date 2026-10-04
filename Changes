@@ -2,6 +2,11 @@ Revision history for OpenTelemetry-Exporter-OTLP
 
 {{$NEXT}}
 
+    * Encode an undefined value as an empty AnyValue, not an empty string.
+
+    * Keep a value that cannot be encoded in place as an empty AnyValue,
+      instead of dropping it from its list or key.
+
 0.021     2025-05-08 08:49:59 BST
 
     * Switch to the internal logger added to OpenTelemetry v0.030.
