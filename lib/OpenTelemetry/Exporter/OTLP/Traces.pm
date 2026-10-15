@@ -3,6 +3,6 @@ use Object::Pad ':experimental(init_expr)';
 
 package OpenTelemetry::Exporter::OTLP::Traces;
 
-our $VERSION = '0.022';
+our $VERSION = '0.023';
 
 class OpenTelemetry::Exporter::OTLP::Traces :isa(OpenTelemetry::Exporter::OTLP) {}
